@@ -46,6 +46,8 @@ This repository now includes a Dart backend service scaffold in `lib/backend.dar
 
 ## Production hardening still required
 
+- Idempotency and audit logging are scaffolded in-memory for UAT; production should persist them with retention and access controls.
+
 - Replace in-memory maps with Postgres/Firestore tables and migrations.
 - Add authentication/authorization middleware for customers, staff, and admins.
 - Add idempotency keys for order, payment, webhook, invoice, and WhatsApp operations.

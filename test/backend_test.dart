@@ -276,4 +276,54 @@ void main() {
     expect(verify.body['status'], 'Picked up');
     expect(backend.qrScanVerifyApi.scanAudit, hasLength(1));
   });
+
+  test(
+    'idempotency replays duplicate order creation without duplicate orders',
+    () {
+      final backend = SmartKiranaBackend.seeded();
+      const request = BackendRequest(
+        method: 'POST',
+        path: '/orders',
+        headers: {
+          'x-idempotency-key': 'order-repeat-1',
+          'x-actor': 'CUS9876543210',
+        },
+        body: {
+          'customerId': 'CUS9876543210',
+          'items': {'rice_sona_5kg': 1},
+          'slot': 'Today 6 PM - 8 PM',
+          'fulfilmentMode': 'Home delivery',
+        },
+      );
+
+      final first = backend.handle(request);
+      final second = backend.handle(request);
+
+      expect(first.statusCode, 201);
+      expect(second.body, first.body);
+      expect(backend.orderCreationApi.orders, hasLength(1));
+      expect(backend.idempotencyStore.size, 1);
+      expect(backend.auditLogService.events.last['replay'], isTrue);
+    },
+  );
+
+  test('health and audit endpoints expose operational readiness', () {
+    final backend = SmartKiranaBackend.seeded();
+    backend.handle(
+      const BackendRequest(method: 'GET', path: '/catalogue/products'),
+    );
+
+    final health = backend.handle(
+      const BackendRequest(method: 'GET', path: '/health'),
+    );
+    expect(health.ok, isTrue);
+    expect(health.body['status'], 'ready');
+    expect(health.body['products'], 3);
+
+    final audit = backend.handle(
+      const BackendRequest(method: 'GET', path: '/audit/events'),
+    );
+    expect(audit.ok, isTrue);
+    expect(audit.body['total'], greaterThanOrEqualTo(2));
+  });
 }

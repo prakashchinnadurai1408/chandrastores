@@ -47,29 +47,29 @@ class ProductRecord {
   final bool active;
 
   ProductRecord copyWith({int? stockQty, bool? active}) => ProductRecord(
-        id: id,
-        name: name,
-        category: category,
-        packSize: packSize,
-        price: price,
-        mrp: mrp,
-        stockQty: stockQty ?? this.stockQty,
-        reorderLevel: reorderLevel,
-        active: active ?? this.active,
-      );
+    id: id,
+    name: name,
+    category: category,
+    packSize: packSize,
+    price: price,
+    mrp: mrp,
+    stockQty: stockQty ?? this.stockQty,
+    reorderLevel: reorderLevel,
+    active: active ?? this.active,
+  );
 
   Map<String, Object?> toJson() => {
-        'id': id,
-        'name': name,
-        'category': category,
-        'packSize': packSize,
-        'price': price,
-        'mrp': mrp,
-        'stockQty': stockQty,
-        'reorderLevel': reorderLevel,
-        'active': active,
-        'lowStock': stockQty <= reorderLevel,
-      };
+    'id': id,
+    'name': name,
+    'category': category,
+    'packSize': packSize,
+    'price': price,
+    'mrp': mrp,
+    'stockQty': stockQty,
+    'reorderLevel': reorderLevel,
+    'active': active,
+    'lowStock': stockQty <= reorderLevel,
+  };
 }
 
 class CustomerApi {
@@ -371,7 +371,8 @@ class WhatsAppBusinessBackend {
 
   ApiResponse sendTransactional(Map<String, Object?> body) {
     final event = '${body['event'] ?? 'order_received'}';
-    final template = {
+    final template =
+        {
           'order_received': 'order_received_v1',
           'payment_captured': 'payment_success_v1',
           'pickup_ready': 'pickup_ready_v1',
@@ -412,15 +413,18 @@ class DeliverySlotService {
   ];
 
   ApiResponse available({String fulfilmentMode = 'Home delivery'}) {
-    final filtered = slots.where((slot) {
-      final label = '${slot['label']}';
-      if (fulfilmentMode == 'Store pickup') return label.contains('pickup');
-      return !label.contains('pickup');
-    }).map((slot) {
-      final capacity = slot['capacity'] as int;
-      final booked = slot['booked'] as int;
-      return {...slot, 'available': capacity - booked};
-    }).toList();
+    final filtered = slots
+        .where((slot) {
+          final label = '${slot['label']}';
+          if (fulfilmentMode == 'Store pickup') return label.contains('pickup');
+          return !label.contains('pickup');
+        })
+        .map((slot) {
+          final capacity = slot['capacity'] as int;
+          final booked = slot['booked'] as int;
+          return {...slot, 'available': capacity - booked};
+        })
+        .toList();
     return ApiResponse(200, {'slots': filtered});
   }
 }
@@ -510,8 +514,9 @@ class QrScanVerifyApi {
           : orderId.substring(orderId.length - 6);
       final fulfilmentMode =
           '${(order['quote'] as Map<String, Object?>)['fulfilmentMode']}';
-      final expected =
-          fulfilmentMode == 'Store pickup' ? 'PU-$suffix' : 'DL-$suffix';
+      final expected = fulfilmentMode == 'Store pickup'
+          ? 'PU-$suffix'
+          : 'DL-$suffix';
       if (code == expected) {
         final audit = {
           'scanId': _nextId('SCN'),
@@ -522,8 +527,9 @@ class QrScanVerifyApi {
         };
         scanAudit.add(audit);
         if (body['markComplete'] == true) {
-          order['status'] =
-              fulfilmentMode == 'Store pickup' ? 'Picked up' : 'Delivered';
+          order['status'] = fulfilmentMode == 'Store pickup'
+              ? 'Picked up'
+              : 'Delivered';
         }
         return ApiResponse(200, {
           'valid': true,
@@ -540,13 +546,13 @@ class QrScanVerifyApi {
 
 class QrDownloadService {
   ApiResponse appDownloadQr({String channel = 'counter'}) => ApiResponse(200, {
-        'landingUrl': 'https://chandrastores.example/app?channel=$channel',
-        'qrPayload': 'smartkirana://download?channel=$channel',
-        'playStoreUrl':
-            'https://play.google.com/store/apps/details?id=com.chandrastores.smartkirana',
-        'appStoreUrl':
-            'https://apps.apple.com/app/smart-kirana-chandra-stores/id0000000000',
-      });
+    'landingUrl': 'https://chandrastores.example/app?channel=$channel',
+    'qrPayload': 'smartkirana://download?channel=$channel',
+    'playStoreUrl':
+        'https://play.google.com/store/apps/details?id=com.chandrastores.smartkirana',
+    'appStoreUrl':
+        'https://apps.apple.com/app/smart-kirana-chandra-stores/id0000000000',
+  });
 }
 
 class RewardWalletService {
@@ -554,14 +560,14 @@ class RewardWalletService {
   final List<Map<String, Object?>> ledger = [];
 
   Map<String, Object?> _wallet(String customerId) => wallets.putIfAbsent(
-        customerId,
-        () => {
-          'customerId': customerId,
-          'points': 420,
-          'storeCreditLimit': 5000,
-          'storeCreditUsed': 1250,
-        },
-      );
+    customerId,
+    () => {
+      'customerId': customerId,
+      'points': 420,
+      'storeCreditLimit': 5000,
+      'storeCreditUsed': 1250,
+    },
+  );
 
   ApiResponse summary(String customerId) =>
       ApiResponse(200, {'wallet': _wallet(customerId)});
@@ -657,9 +663,9 @@ class DeliveryTrackingService {
   }
 
   ApiResponse timeline(String orderId) => ApiResponse(200, {
-        'orderId': orderId,
-        'timeline': timelines[orderId] ?? [],
-      });
+    'orderId': orderId,
+    'timeline': timelines[orderId] ?? [],
+  });
 }
 
 class RecurringPlanService {
@@ -691,8 +697,9 @@ class RecurringPlanService {
   }
 
   ApiResponse due() {
-    final active =
-        plans.values.where((plan) => plan['status'] == 'active').toList();
+    final active = plans.values
+        .where((plan) => plan['status'] == 'active')
+        .toList();
     return ApiResponse(200, {'plans': active});
   }
 
@@ -704,10 +711,61 @@ class RecurringPlanService {
   }
 }
 
+class IdempotencyStore {
+  final Map<String, ApiResponse> _responses = {};
+
+  ApiResponse? read(String key) => _responses[key];
+
+  void save(String key, ApiResponse response) {
+    if (response.ok) _responses[key] = response;
+  }
+
+  int get size => _responses.length;
+}
+
+class AuditLogService {
+  final List<Map<String, Object?>> events = [];
+
+  void record(
+    BackendRequest request,
+    ApiResponse response, {
+    bool replay = false,
+  }) {
+    events.add({
+      'auditId': _nextId('AUD'),
+      'method': request.method.toUpperCase(),
+      'path': request.path,
+      'statusCode': response.statusCode,
+      'idempotencyKey': request.headers['x-idempotency-key'],
+      'replay': replay,
+      'actor':
+          request.headers['x-actor'] ??
+          request.body['customerId'] ??
+          'anonymous',
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  ApiResponse list({int limit = 50}) => ApiResponse(200, {
+    'events': events.reversed.take(limit).toList(),
+    'total': events.length,
+  });
+}
+
+class HealthCheckService {
+  ApiResponse ready({required SmartKiranaBackend backend}) => ApiResponse(200, {
+    'status': 'ready',
+    'products': backend.products.length,
+    'orders': backend.orderCreationApi.orders.length,
+    'auditEvents': backend.auditLogService.events.length,
+    'idempotencyKeys': backend.idempotencyStore.size,
+  });
+}
+
 class SmartKiranaBackend {
   SmartKiranaBackend.seeded()
-      : products = _seedProducts(),
-        customerApi = CustomerApi() {
+    : products = _seedProducts(),
+      customerApi = CustomerApi() {
     catalogueApi = CatalogueApi(products);
     inventoryService = InventoryService(products);
     pricingOfferEngine = PricingOfferEngine(products);
@@ -731,6 +789,9 @@ class SmartKiranaBackend {
     supportTicketBackend = SupportTicketBackend();
     deliveryTrackingService = DeliveryTrackingService();
     recurringPlanService = RecurringPlanService();
+    idempotencyStore = IdempotencyStore();
+    auditLogService = AuditLogService();
+    healthCheckService = HealthCheckService();
   }
 
   final Map<String, ProductRecord> products;
@@ -752,11 +813,41 @@ class SmartKiranaBackend {
   late final SupportTicketBackend supportTicketBackend;
   late final DeliveryTrackingService deliveryTrackingService;
   late final RecurringPlanService recurringPlanService;
+  late final IdempotencyStore idempotencyStore;
+  late final AuditLogService auditLogService;
+  late final HealthCheckService healthCheckService;
 
   ApiResponse handle(BackendRequest request) {
     final method = request.method.toUpperCase();
-    final segments =
-        request.path.split('/').where((segment) => segment.isNotEmpty).toList();
+    final idempotencyKey = request.headers['x-idempotency-key'];
+    final cacheKey = '$method ${request.path} $idempotencyKey';
+    if (idempotencyKey != null && method != 'GET') {
+      final cached = idempotencyStore.read(cacheKey);
+      if (cached != null) {
+        auditLogService.record(request, cached, replay: true);
+        return cached;
+      }
+    }
+    final response = _dispatch(request);
+    if (idempotencyKey != null && method != 'GET') {
+      idempotencyStore.save(cacheKey, response);
+    }
+    auditLogService.record(request, response);
+    return response;
+  }
+
+  ApiResponse _dispatch(BackendRequest request) {
+    final method = request.method.toUpperCase();
+    final segments = request.path
+        .split('/')
+        .where((segment) => segment.isNotEmpty)
+        .toList();
+    if (method == 'GET' && request.path == '/health') {
+      return healthCheckService.ready(backend: this);
+    }
+    if (method == 'GET' && request.path == '/audit/events') {
+      return auditLogService.list();
+    }
     if (method == 'POST' && request.path == '/customers/login/start') {
       return customerApi.startOtp(request.body);
     }
@@ -873,37 +964,37 @@ class SmartKiranaBackend {
 }
 
 Map<String, ProductRecord> _seedProducts() => {
-      'rice_sona_5kg': const ProductRecord(
-        id: 'rice_sona_5kg',
-        name: 'Sona Masoori Rice',
-        category: 'Staples',
-        packSize: '5 kg',
-        price: 420,
-        mrp: 465,
-        stockQty: 120,
-        reorderLevel: 20,
-      ),
-      'oil_groundnut_1l': const ProductRecord(
-        id: 'oil_groundnut_1l',
-        name: 'Groundnut Oil',
-        category: 'Oils',
-        packSize: '1 L',
-        price: 185,
-        mrp: 210,
-        stockQty: 80,
-        reorderLevel: 15,
-      ),
-      'milk_toned_1l': const ProductRecord(
-        id: 'milk_toned_1l',
-        name: 'Toned Milk',
-        category: 'Dairy',
-        packSize: '1 L',
-        price: 62,
-        mrp: 64,
-        stockQty: 45,
-        reorderLevel: 25,
-      ),
-    };
+  'rice_sona_5kg': const ProductRecord(
+    id: 'rice_sona_5kg',
+    name: 'Sona Masoori Rice',
+    category: 'Staples',
+    packSize: '5 kg',
+    price: 420,
+    mrp: 465,
+    stockQty: 120,
+    reorderLevel: 20,
+  ),
+  'oil_groundnut_1l': const ProductRecord(
+    id: 'oil_groundnut_1l',
+    name: 'Groundnut Oil',
+    category: 'Oils',
+    packSize: '1 L',
+    price: 185,
+    mrp: 210,
+    stockQty: 80,
+    reorderLevel: 15,
+  ),
+  'milk_toned_1l': const ProductRecord(
+    id: 'milk_toned_1l',
+    name: 'Toned Milk',
+    category: 'Dairy',
+    packSize: '1 L',
+    price: 62,
+    mrp: 64,
+    stockQty: 45,
+    reorderLevel: 25,
+  ),
+};
 
 Map<String, int> _decodeItems(Object? raw) {
   if (raw is Map) {

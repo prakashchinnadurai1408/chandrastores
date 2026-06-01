@@ -207,3 +207,10 @@ The repository now includes a Dart backend service scaffold at `lib/backend.dart
 ## Partly-built feature backend completion
 
 The backend scaffold now includes completion paths for the previously partial production features: WhatsApp OTP plus transactional templates, payment attempts/webhooks/refunds, app-download QR payloads, pickup QR/pass scan verification with audit logs, notification queues, rewards/wallet ledger operations, invoice generation, support tickets, delivery tracking events, and recurring grocery plan APIs.
+
+
+## Sprint 28 additions
+
+- Backend scaffold now supports idempotent POST retries through `x-idempotency-key` so duplicate order/payment/support submissions can safely replay the first successful response.
+- Every backend request is captured in an audit log with actor, path, status code, idempotency key, replay flag, and timestamp.
+- Added `/health` and `/audit/events` operational routes to prepare the backend scaffold for deployment probes and admin observability.
