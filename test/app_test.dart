@@ -105,6 +105,7 @@ void main() {
       deliveryFee: 0,
       payable: products.first.price * 2,
       slot: 'Today 6 PM - 8 PM',
+      deliveryMode: 'Home delivery',
       paymentMethod: 'UPI',
       deliveryAddress: customerAddress,
       deliveryInstruction: 'Ring bell and hand over',
@@ -181,6 +182,7 @@ void main() {
       deliveryFee: 0,
       payable: products.first.price,
       slot: 'Today 6 PM - 8 PM',
+      deliveryMode: 'Home delivery',
       paymentMethod: 'UPI',
       deliveryAddress: customerAddress,
       deliveryInstruction: 'Ring bell and hand over',
@@ -255,6 +257,7 @@ void main() {
       deliveryFee: 0,
       payable: products.first.price,
       slot: 'Today 6 PM - 8 PM',
+      deliveryMode: 'Home delivery',
       paymentMethod: 'UPI',
       deliveryAddress: customerAddress,
       deliveryInstruction: 'Ring bell and hand over',
@@ -314,6 +317,7 @@ void main() {
       deliveryFee: 0,
       payable: products.first.price,
       slot: 'Today 6 PM - 8 PM',
+      deliveryMode: 'Home delivery',
       paymentMethod: 'UPI',
       deliveryAddress: customerAddress,
       deliveryInstruction: 'Ring bell and hand over',
@@ -342,5 +346,66 @@ void main() {
     expect(saved?.orderId, 'SKSLOT');
     expect(saved?.requestedSlot, 'Tomorrow 8 AM - 10 AM');
     expect(saved?.reason, 'Need a different time');
+  });
+
+  testWidgets('cart store pickup removes delivery fee', (tester) async {
+    var fulfilmentMode = 'Home delivery';
+
+    expect(
+      deliveryFeeFor('Today 6 PM - 8 PM', 100, fulfilmentMode),
+      29,
+    );
+    expect(
+      deliveryFeeFor('Today 6 PM - 8 PM', 100, 'Store pickup'),
+      0,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) => Scaffold(
+            body: CartPage(
+              lines: [CartLine(products.first, 1)],
+              subtotal: products.first.price,
+              offerDiscount: 0,
+              deliveryFee: deliveryFeeFor(
+                'Today 6 PM - 8 PM',
+                products.first.price,
+                fulfilmentMode,
+              ),
+              savings: products.first.saving,
+              monthlySpend: 0,
+              monthlyBudgetLimit: defaultMonthlyBudgetLimit,
+              appliedOffer: null,
+              deliverySlot: 'Today 6 PM - 8 PM',
+              fulfilmentMode: fulfilmentMode,
+              paymentMethod: 'UPI',
+              selectedAddress: customerAddress,
+              savedAddresses: savedCustomerAddresses,
+              deliveryInstruction: 'Ring bell and hand over',
+              substitutionPreference: 'Call before replacing',
+              onQuantity: (_, __) {},
+              onSlotChanged: (_) {},
+              onFulfilmentModeChanged: (value) =>
+                  setState(() => fulfilmentMode = value),
+              onPaymentChanged: (_) {},
+              onAddressChanged: (_) {},
+              onDeliveryInstructionChanged: (_) {},
+              onSubstitutionPreferenceChanged: (_) {},
+              onApplyOffer: (_) {},
+              onRequestApproval: () {},
+              approvalRequests: const [],
+              onCheckout: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Fulfilment mode'), findsOneWidget);
+    await tester.tap(find.text('Store pickup'));
+    await tester.pump();
+
+    expect(fulfilmentMode, 'Store pickup');
   });
 }

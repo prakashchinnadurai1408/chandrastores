@@ -142,11 +142,12 @@ class CustomerPreferences {
     String? languageCode,
     bool? easyMode,
     bool? voiceOrdering,
-  }) => CustomerPreferences(
-    languageCode: languageCode ?? this.languageCode,
-    easyMode: easyMode ?? this.easyMode,
-    voiceOrdering: voiceOrdering ?? this.voiceOrdering,
-  );
+  }) =>
+      CustomerPreferences(
+        languageCode: languageCode ?? this.languageCode,
+        easyMode: easyMode ?? this.easyMode,
+        voiceOrdering: voiceOrdering ?? this.voiceOrdering,
+      );
 }
 
 class StoreInvite {
@@ -224,6 +225,7 @@ class KiranaOrder {
     required this.deliveryFee,
     required this.payable,
     required this.slot,
+    required this.deliveryMode,
     required this.paymentMethod,
     required this.deliveryAddress,
     required this.deliveryInstruction,
@@ -240,6 +242,7 @@ class KiranaOrder {
   final int deliveryFee;
   final int payable;
   final String slot;
+  final String deliveryMode;
   final String paymentMethod;
   final CustomerAddress deliveryAddress;
   final String deliveryInstruction;
@@ -249,21 +252,22 @@ class KiranaOrder {
   final String status;
 
   KiranaOrder copyWith({String? status}) => KiranaOrder(
-    id: id,
-    items: items,
-    total: total,
-    discount: discount,
-    deliveryFee: deliveryFee,
-    payable: payable,
-    slot: slot,
-    paymentMethod: paymentMethod,
-    deliveryAddress: deliveryAddress,
-    deliveryInstruction: deliveryInstruction,
-    substitutionPreference: substitutionPreference,
-    reservationExpiresAt: reservationExpiresAt,
-    createdAt: createdAt,
-    status: status ?? this.status,
-  );
+        id: id,
+        items: items,
+        total: total,
+        discount: discount,
+        deliveryFee: deliveryFee,
+        payable: payable,
+        slot: slot,
+        deliveryMode: deliveryMode,
+        paymentMethod: paymentMethod,
+        deliveryAddress: deliveryAddress,
+        deliveryInstruction: deliveryInstruction,
+        substitutionPreference: substitutionPreference,
+        reservationExpiresAt: reservationExpiresAt,
+        createdAt: createdAt,
+        status: status ?? this.status,
+      );
 
   int get itemCount => items.fold(0, (sum, line) => sum + line.quantity);
   int get reservedItemCount =>
@@ -481,9 +485,8 @@ GroceryStatement buildStatement(List<KiranaOrder> orders) {
     monthLabel: monthLabel,
     orderCount: orders.length,
     totalSpend: orders.fold(0, (sum, order) => sum + order.payable),
-    digitalPayments: orders
-        .where((order) => order.paymentMethod != 'Cash')
-        .length,
+    digitalPayments:
+        orders.where((order) => order.paymentMethod != 'Cash').length,
     topCategories: Map.fromEntries(sortedEntries.take(3)),
   );
 }
@@ -600,6 +603,7 @@ const orderStatusSteps = [
   'Delivered',
 ];
 const terminalOrderStatuses = ['Delivered', 'Cancelled'];
+const fulfilmentModes = ['Home delivery', 'Store pickup'];
 const supportedLanguages = {
   'en': 'English',
   'ta': 'தமிழ்',
@@ -614,8 +618,14 @@ const deliverySlotFees = {
 };
 const defaultMonthlyBudgetLimit = 10000;
 
-int deliveryFeeFor(String slot, int subtotal) =>
-    subtotal >= freeDeliveryThreshold ? 0 : deliverySlotFees[slot] ?? 0;
+int deliveryFeeFor(
+  String slot,
+  int subtotal, [
+  String mode = 'Home delivery',
+]) =>
+    mode == 'Store pickup' || subtotal >= freeDeliveryThreshold
+        ? 0
+        : deliverySlotFees[slot] ?? 0;
 
 const smartOffers = <SmartOffer>[
   SmartOffer(
@@ -850,8 +860,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 'Smart Kirana',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                      fontWeight: FontWeight.w800,
+                    ),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -943,21 +953,22 @@ class _ShopShellState extends State<ShopShell> {
   String query = '';
   String category = 'All';
   String deliverySlot = 'Today 6 PM - 8 PM';
+  String fulfilmentMode = 'Home delivery';
   String paymentMethod = 'UPI';
   CustomerAddress selectedAddress = customerAddress;
   String deliveryInstruction = 'Ring bell and hand over';
   String substitutionPreference = 'Call before replacing';
 
   List<String> get categories => [
-    'All',
-    ...{for (final product in products) product.category},
-  ];
+        'All',
+        ...{for (final product in products) product.category},
+      ];
   int get cartCount => cart.values.fold(0, (sum, line) => sum + line.quantity);
   int get subtotal => cart.values.fold(0, (sum, line) => sum + line.total);
   int get offerDiscount => (appliedOffer?.isEligible(subtotal) ?? false)
       ? appliedOffer!.discount
       : 0;
-  int get deliveryFee => deliveryFeeFor(deliverySlot, subtotal);
+  int get deliveryFee => deliveryFeeFor(deliverySlot, subtotal, fulfilmentMode);
   int get payable => (subtotal - offerDiscount + deliveryFee)
       .clamp(0, subtotal + deliveryFee)
       .toInt();
@@ -1055,6 +1066,7 @@ class _ShopShellState extends State<ShopShell> {
       }
       selectedAddress = order.deliveryAddress;
       deliverySlot = order.slot;
+      fulfilmentMode = order.deliveryMode;
       deliveryInstruction = order.deliveryInstruction;
       substitutionPreference = order.substitutionPreference;
       tabIndex = 2;
@@ -1126,6 +1138,7 @@ class _ShopShellState extends State<ShopShell> {
       deliveryFee: deliveryFee,
       payable: payable,
       slot: deliverySlot,
+      deliveryMode: fulfilmentMode,
       paymentMethod: paymentMethod,
       deliveryAddress: selectedAddress,
       deliveryInstruction: deliveryInstruction,
@@ -1159,7 +1172,7 @@ class _ShopShellState extends State<ShopShell> {
         )
         .join(', ');
     final message = Uri.encodeComponent(
-      'Smart Kirana order ${order.id}: $summary. Total: ${currency.format(order.payable)} including delivery fee ${currency.format(order.deliveryFee)}. Slot: ${order.slot}. Payment: ${order.paymentMethod}. Delivery: ${order.deliveryInstruction}. Substitution: ${order.substitutionPreference}. Stock reserved until ${DateFormat('hh:mm a').format(order.reservationExpiresAt)}. Address: ${order.deliveryAddress.label} - ${order.deliveryAddress.line1}, ${order.deliveryAddress.landmark}.',
+      'Smart Kirana order ${order.id}: $summary. Total: ${currency.format(order.payable)} including delivery fee ${currency.format(order.deliveryFee)}. Fulfilment: ${order.deliveryMode}. Slot: ${order.slot}. Payment: ${order.paymentMethod}. Delivery: ${order.deliveryInstruction}. Substitution: ${order.substitutionPreference}. Stock reserved until ${DateFormat('hh:mm a').format(order.reservationExpiresAt)}. Address: ${order.deliveryAddress.label} - ${order.deliveryAddress.line1}, ${order.deliveryAddress.landmark}.',
     );
     final uri = Uri.parse('https://wa.me/$storeWhatsAppNumber?text=$message');
     await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -1372,8 +1385,8 @@ class _ShopShellState extends State<ShopShell> {
   }
 
   void updateLanguage(String languageCode) => setState(
-    () => preferences = preferences.copyWith(languageCode: languageCode),
-  );
+        () => preferences = preferences.copyWith(languageCode: languageCode),
+      );
 
   void toggleEasyMode(bool value) =>
       setState(() => preferences = preferences.copyWith(easyMode: value));
@@ -1520,6 +1533,7 @@ class _ShopShellState extends State<ShopShell> {
         monthlyBudgetLimit: defaultMonthlyBudgetLimit,
         appliedOffer: appliedOffer,
         deliverySlot: deliverySlot,
+        fulfilmentMode: fulfilmentMode,
         paymentMethod: paymentMethod,
         selectedAddress: selectedAddress,
         savedAddresses: savedCustomerAddresses,
@@ -1527,6 +1541,8 @@ class _ShopShellState extends State<ShopShell> {
         substitutionPreference: substitutionPreference,
         onQuantity: changeQuantity,
         onSlotChanged: (value) => setState(() => deliverySlot = value),
+        onFulfilmentModeChanged: (value) =>
+            setState(() => fulfilmentMode = value),
         onPaymentChanged: (value) => setState(() => paymentMethod = value),
         onAddressChanged: (value) => setState(() => selectedAddress = value),
         onDeliveryInstructionChanged: (value) =>
@@ -1644,8 +1660,8 @@ class CataloguePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final filtered = products.where((product) {
       final matchesCategory = category == 'All' || product.category == category;
-      final text = '${product.name} ${product.brand} ${product.category}'
-          .toLowerCase();
+      final text =
+          '${product.name} ${product.brand} ${product.category}'.toLowerCase();
       return matchesCategory && text.contains(query.toLowerCase());
     }).toList();
 
@@ -1725,8 +1741,8 @@ class ProductCard extends StatelessWidget {
                   Text(
                     product.name,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
                   Text(
                     '${product.brand} • ${product.packSize} • ${product.category}',
@@ -1866,7 +1882,9 @@ class PlannerPage extends StatelessWidget {
                         Expanded(
                           child: Text(
                             item.label,
-                            style: Theme.of(context).textTheme.titleLarge
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                         ),
@@ -1934,8 +1952,8 @@ class SavedPlanCard extends StatelessWidget {
                   child: Text(
                     plan.name,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text(plan.frequency)),
@@ -1971,6 +1989,7 @@ class CartPage extends StatelessWidget {
     required this.monthlyBudgetLimit,
     required this.appliedOffer,
     required this.deliverySlot,
+    required this.fulfilmentMode,
     required this.paymentMethod,
     required this.selectedAddress,
     required this.savedAddresses,
@@ -1978,6 +1997,7 @@ class CartPage extends StatelessWidget {
     required this.substitutionPreference,
     required this.onQuantity,
     required this.onSlotChanged,
+    required this.onFulfilmentModeChanged,
     required this.onPaymentChanged,
     required this.onAddressChanged,
     required this.onDeliveryInstructionChanged,
@@ -1998,6 +2018,7 @@ class CartPage extends StatelessWidget {
   final int monthlyBudgetLimit;
   final SmartOffer? appliedOffer;
   final String deliverySlot;
+  final String fulfilmentMode;
   final String paymentMethod;
   final CustomerAddress selectedAddress;
   final List<CustomerAddress> savedAddresses;
@@ -2005,6 +2026,7 @@ class CartPage extends StatelessWidget {
   final String substitutionPreference;
   final void Function(String productId, int delta) onQuantity;
   final ValueChanged<String> onSlotChanged;
+  final ValueChanged<String> onFulfilmentModeChanged;
   final ValueChanged<String> onPaymentChanged;
   final ValueChanged<CustomerAddress> onAddressChanged;
   final ValueChanged<String> onDeliveryInstructionChanged;
@@ -2077,10 +2099,31 @@ class CartPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        Text(
+          'Fulfilment mode',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: fulfilmentModes
+              .map(
+                (mode) => ChoiceChip(
+                  label: Text(mode),
+                  selected: mode == fulfilmentMode,
+                  onSelected: (_) => onFulfilmentModeChanged(mode),
+                ),
+              )
+              .toList(),
+        ),
+        const SizedBox(height: 12),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: deliverySlot,
           items: slots.map((slot) {
-            final fee = deliveryFeeFor(slot, subtotal);
+            final fee = deliveryFeeFor(slot, subtotal, fulfilmentMode);
             return DropdownMenuItem(
               value: slot,
               child: Text(
@@ -2097,6 +2140,7 @@ class CartPage extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<CustomerAddress>(
+          isExpanded: true,
           initialValue: selectedAddress,
           items: savedAddresses
               .map(
@@ -2115,6 +2159,7 @@ class CartPage extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: deliveryInstruction,
           items: deliveryInstructions
               .map(
@@ -2134,6 +2179,7 @@ class CartPage extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: substitutionPreference,
           items: substitutionPreferences
               .map(
@@ -2225,9 +2271,8 @@ class CartPage extends StatelessWidget {
                   ),
                 SummaryRow(
                   label: 'Delivery fee',
-                  value: deliveryFee == 0
-                      ? 'Free'
-                      : currency.format(deliveryFee),
+                  value:
+                      deliveryFee == 0 ? 'Free' : currency.format(deliveryFee),
                 ),
                 if (subtotal < freeDeliveryThreshold)
                   SummaryRow(
@@ -2271,9 +2316,8 @@ class ApprovalSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pendingCount = approvalRequests
-        .where((request) => request.status == 'Pending')
-        .length;
+    final pendingCount =
+        approvalRequests.where((request) => request.status == 'Pending').length;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -2293,8 +2337,8 @@ class ApprovalSummaryCard extends StatelessWidget {
                   child: Text(
                     'Family approval',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text('$pendingCount pending')),
@@ -2346,14 +2390,14 @@ class _ApprovalRequestSheetState extends State<ApprovalRequestSheet> {
   }
 
   ApprovalRequest buildRequest() => ApprovalRequest(
-    requestId: 'APR${DateTime.now().millisecondsSinceEpoch}',
-    member: member,
-    cartTotal: widget.cartTotal,
-    note: noteController.text.trim().isEmpty
-        ? 'Please approve this Smart Kirana cart.'
-        : noteController.text.trim(),
-    createdAt: DateTime.now(),
-  );
+        requestId: 'APR${DateTime.now().millisecondsSinceEpoch}',
+        member: member,
+        cartTotal: widget.cartTotal,
+        note: noteController.text.trim().isEmpty
+            ? 'Please approve this Smart Kirana cart.'
+            : noteController.text.trim(),
+        createdAt: DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -2379,8 +2423,8 @@ class _ApprovalRequestSheetState extends State<ApprovalRequestSheet> {
                 child: Text(
                   'Request family approval',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -2489,8 +2533,8 @@ class BudgetGuardCard extends StatelessWidget {
                   child: Text(
                     'Monthly budget guard',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(
@@ -2604,8 +2648,8 @@ class OrderConfirmationSheet extends StatelessWidget {
                 child: Text(
                   'Order received',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -2613,6 +2657,7 @@ class OrderConfirmationSheet extends StatelessWidget {
           const SizedBox(height: 16),
           SummaryRow(label: 'Order ID', value: order.id),
           SummaryRow(label: 'Items', value: '${order.itemCount}'),
+          SummaryRow(label: 'Fulfilment', value: order.deliveryMode),
           SummaryRow(label: 'Delivery slot', value: order.slot),
           SummaryRow(label: 'Instruction', value: order.deliveryInstruction),
           SummaryRow(
@@ -2697,11 +2742,11 @@ class _CancellationSheetState extends State<CancellationSheet> {
       widget.existingCancellation?.refundMode ?? 'Original payment method';
 
   OrderCancellation buildCancellation() => OrderCancellation(
-    orderId: widget.order.id,
-    reason: reason,
-    refundMode: refundMode,
-    createdAt: widget.existingCancellation?.createdAt ?? DateTime.now(),
-  );
+        orderId: widget.order.id,
+        reason: reason,
+        refundMode: refundMode,
+        createdAt: widget.existingCancellation?.createdAt ?? DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -2740,8 +2785,8 @@ class _CancellationSheetState extends State<CancellationSheet> {
                 child: Text(
                   'Cancel ${widget.order.id}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -2845,12 +2890,12 @@ class _DeliveryChangeSheetState extends State<DeliveryChangeSheet> {
   }
 
   DeliveryChangeRequest buildRequest() => DeliveryChangeRequest(
-    orderId: widget.order.id,
-    requestedSlot: requestedSlot,
-    reason: reason,
-    note: noteController.text.trim(),
-    createdAt: widget.existingRequest?.createdAt ?? DateTime.now(),
-  );
+        orderId: widget.order.id,
+        requestedSlot: requestedSlot,
+        reason: reason,
+        note: noteController.text.trim(),
+        createdAt: widget.existingRequest?.createdAt ?? DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -2891,8 +2936,8 @@ class _DeliveryChangeSheetState extends State<DeliveryChangeSheet> {
                   child: Text(
                     'Reschedule ${widget.order.id}',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -3011,14 +3056,15 @@ class _PaymentProofSheetState extends State<PaymentProofSheet> {
   }
 
   PaymentProof buildProof() => PaymentProof(
-    orderId: widget.order.id,
-    method: method,
-    reference: referenceController.text.trim().isEmpty
-        ? 'Pending reference'
-        : referenceController.text.trim(),
-    amount: int.tryParse(amountController.text.trim()) ?? widget.order.payable,
-    createdAt: widget.existingProof?.createdAt ?? DateTime.now(),
-  );
+        orderId: widget.order.id,
+        method: method,
+        reference: referenceController.text.trim().isEmpty
+            ? 'Pending reference'
+            : referenceController.text.trim(),
+        amount:
+            int.tryParse(amountController.text.trim()) ?? widget.order.payable,
+        createdAt: widget.existingProof?.createdAt ?? DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -3057,8 +3103,8 @@ class _PaymentProofSheetState extends State<PaymentProofSheet> {
                   child: Text(
                     'Payment proof for ${widget.order.id}',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -3159,8 +3205,8 @@ class _InvoiceRequestSheetState extends State<InvoiceRequestSheet> {
       widget.existingRequest?.invoiceType ?? 'Retail bill';
   late final TextEditingController billingNameController =
       TextEditingController(
-        text: widget.existingRequest?.billingName ?? 'Chandra Stores customer',
-      );
+    text: widget.existingRequest?.billingName ?? 'Chandra Stores customer',
+  );
   late final TextEditingController gstinController = TextEditingController(
     text: widget.existingRequest?.gstin ?? '',
   );
@@ -3177,15 +3223,15 @@ class _InvoiceRequestSheetState extends State<InvoiceRequestSheet> {
   }
 
   InvoiceRequest buildRequest() => InvoiceRequest(
-    orderId: widget.order.id,
-    invoiceType: invoiceType,
-    billingName: billingNameController.text.trim().isEmpty
-        ? 'Chandra Stores customer'
-        : billingNameController.text.trim(),
-    gstin: gstinController.text.trim().toUpperCase(),
-    email: emailController.text.trim(),
-    createdAt: widget.existingRequest?.createdAt ?? DateTime.now(),
-  );
+        orderId: widget.order.id,
+        invoiceType: invoiceType,
+        billingName: billingNameController.text.trim().isEmpty
+            ? 'Chandra Stores customer'
+            : billingNameController.text.trim(),
+        gstin: gstinController.text.trim().toUpperCase(),
+        email: emailController.text.trim(),
+        createdAt: widget.existingRequest?.createdAt ?? DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -3220,8 +3266,8 @@ class _InvoiceRequestSheetState extends State<InvoiceRequestSheet> {
                   child: Text(
                     'Invoice for ${widget.order.id}',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -3340,17 +3386,16 @@ class _SupportTicketSheetState extends State<SupportTicketSheet> {
   }
 
   SupportTicket buildTicket() => SupportTicket(
-    ticketId:
-        widget.existingTicket?.ticketId ??
-        'SUP${DateTime.now().millisecondsSinceEpoch}',
-    orderId: widget.order.id,
-    issueType: issueType,
-    priority: priority,
-    description: descriptionController.text.trim().isEmpty
-        ? 'Customer requested support from app.'
-        : descriptionController.text.trim(),
-    createdAt: widget.existingTicket?.createdAt ?? DateTime.now(),
-  );
+        ticketId: widget.existingTicket?.ticketId ??
+            'SUP${DateTime.now().millisecondsSinceEpoch}',
+        orderId: widget.order.id,
+        issueType: issueType,
+        priority: priority,
+        description: descriptionController.text.trim().isEmpty
+            ? 'Customer requested support from app.'
+            : descriptionController.text.trim(),
+        createdAt: widget.existingTicket?.createdAt ?? DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -3385,8 +3430,8 @@ class _SupportTicketSheetState extends State<SupportTicketSheet> {
                 child: Text(
                   'Support for ${widget.order.id}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -3521,8 +3566,8 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                 child: Text(
                   'Rate ${widget.order.id}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -3618,15 +3663,15 @@ class OrderTrackingSheet extends StatelessWidget {
                 child: Text(
                   'Track ${order.id}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            '${order.itemCount} items • ${order.slot} • ${currency.format(order.payable)}',
+            '${order.itemCount} items • ${order.deliveryMode} • ${order.slot} • ${currency.format(order.payable)}',
           ),
           const SizedBox(height: 4),
           Text(
@@ -3642,12 +3687,12 @@ class OrderTrackingSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ...orderStatusSteps.asMap().entries.map(
-            (entry) => OrderTimelineStep(
-              label: entry.value,
-              completed: entry.key <= order.statusIndex,
-              isCurrent: entry.key == order.statusIndex,
-            ),
-          ),
+                (entry) => OrderTimelineStep(
+                  label: entry.value,
+                  completed: entry.key <= order.statusIndex,
+                  isCurrent: entry.key == order.statusIndex,
+                ),
+              ),
           const SizedBox(height: 12),
           const InfoTile(
             icon: Icons.swap_horiz,
@@ -3770,8 +3815,8 @@ class PreferenceCard extends StatelessWidget {
                   child: Text(
                     'Accessibility & language',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -3859,8 +3904,8 @@ class HouseholdApprovalCard extends StatelessWidget {
                   child: Text(
                     'Household approvals',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text('${approvalRequests.length}')),
@@ -3936,17 +3981,15 @@ class NotificationCenterCard extends StatelessWidget {
                   child: Text(
                     'Notification center',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text('${notifications.length}')),
               ],
             ),
             const SizedBox(height: 12),
-            ...notifications
-                .take(4)
-                .map(
+            ...notifications.take(4).map(
                   (notification) => ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.circle_notifications),
@@ -4001,8 +4044,8 @@ class AddressBookCard extends StatelessWidget {
                   child: Text(
                     'Delivery address book',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text(selectedAddress.label)),
@@ -4060,8 +4103,8 @@ class InviteCard extends StatelessWidget {
                   child: Text(
                     'Invite family to Smart Kirana',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -4117,8 +4160,8 @@ class StatementCard extends StatelessWidget {
                   child: Text(
                     '${statement.monthLabel} grocery statement',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -4193,8 +4236,8 @@ class RewardCenterCard extends StatelessWidget {
                   child: Text(
                     'Reward center',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text('$availablePoints pts')),
@@ -4274,8 +4317,8 @@ class WalletSummaryCard extends StatelessWidget {
                   child: Text(
                     'Grocery wallet',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],

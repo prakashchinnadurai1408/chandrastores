@@ -183,3 +183,10 @@ The current repository now contains the customer-facing mobile app shell and UX 
 - Recent orders now include delivery reschedule requests for non-terminal orders.
 - Customers can request a new delivery slot, choose a reason, add a store note, save locally, or send the request on WhatsApp.
 - Order cards show reschedule chips so UAT can validate slot-change workflows before fulfilment APIs are connected.
+
+
+## Sprint 26 additions
+
+- Checkout now supports fulfilment mode selection between home delivery and store pickup.
+- Store pickup removes delivery fees while keeping slot, payment, address, and substitution review in the cart.
+- Repeat order and WhatsApp handoff preserve/show the selected fulfilment mode for clearer store operations.
