@@ -769,4 +769,67 @@ void main() {
     expect(row['paymentStatus'], 'settled');
     expect(row['invoiceStatus'], 'generated');
   });
+
+  test('production config drives providers and webhook safety', () {
+    final backend = SmartKiranaBackend.production(
+      config: SmartKiranaBackendConfig.production(
+        apiBaseUrl: 'https://api.chandrastores.in',
+        appDownloadUrl: 'https://chandrastores.in/app',
+        storeUpiId: 'chandrastores@okaxis',
+        paymentGateway: 'cashfree',
+        jwtIssuer: 'chandrastores',
+      ),
+    );
+
+    final health = backend.handle(
+      const BackendRequest(method: 'GET', path: '/health'),
+    );
+    expect(health.statusCode, 200);
+    expect(health.body['environment'], 'production');
+    expect(health.body['demoMode'], isFalse);
+
+    final otp = backend.handle(
+      const BackendRequest(
+        method: 'POST',
+        path: '/customers/login/start',
+        body: {'mobile': '9876543210'},
+      ),
+    );
+    expect(otp.statusCode, 202);
+    expect(otp.body.containsKey('otp'), isFalse);
+    expect(backend.whatsAppBusinessBackend.outbox, hasLength(1));
+
+    final payment = backend.handle(
+      const BackendRequest(
+        method: 'POST',
+        path: '/payments/create',
+        body: {'orderId': 'ORD1', 'amount': 499},
+      ),
+    );
+    final paymentBody = payment.body['payment']! as Map<String, Object?>;
+    expect(paymentBody['gateway'], 'cashfree');
+    expect(paymentBody['upiIntent'], contains('chandrastores@okaxis'));
+
+    final unsignedWebhook = backend.handle(
+      BackendRequest(
+        method: 'POST',
+        path: '/payments/webhook',
+        body: {'paymentId': paymentBody['paymentId'], 'status': 'captured'},
+      ),
+    );
+    expect(unsignedWebhook.statusCode, 401);
+
+    final signedWebhook = backend.handle(
+      BackendRequest(
+        method: 'POST',
+        path: '/payments/webhook',
+        body: {
+          'paymentId': paymentBody['paymentId'],
+          'status': 'captured',
+          'signature': 'signed-by-provider',
+        },
+      ),
+    );
+    expect(signedWebhook.ok, isTrue);
+  });
 }

@@ -4,7 +4,7 @@
 
 1. Reserve the Android package ID and iOS bundle ID for the store brand.
 2. Configure release signing for Google Play Console and Apple App Store Connect.
-3. Publish a lightweight landing page such as `https://store.example.com/app` that detects the device and redirects to Play Store or App Store.
+3. Publish the configured app landing page, for example `https://chandrastores.in/app`, that detects the device and redirects to Play Store or App Store.
 4. Generate a QR code for the landing page and print it at billing counters, delivery bags, invoices, and WhatsApp broadcast creatives.
 5. Track QR scans, installs, OTP completion, first order, and first weekly-plan creation.
 

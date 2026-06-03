@@ -16,6 +16,8 @@ Smart Kirana is a Flutter mobile application for a neighbourhood kirana store se
 
 ```text
 lib/main.dart              Flutter customer app implementation
+lib/backend.dart           Production-shaped backend service scaffold
+test/                      Widget and backend contract tests
 docs/launch-plan.md        Play Store/App Store/QR rollout checklist
 pubspec.yaml               Flutter dependencies and app metadata
 ```
@@ -29,15 +31,19 @@ flutter pub get
 flutter run
 ```
 
-## Production integration notes
+## Production readiness
 
-The current repository now contains the customer-facing mobile app shell and UX flow. Production rollout should connect the placeholders to the backend described in the technical document:
+The current repository contains the customer-facing Flutter app, backend route scaffold, role guards, idempotency/audit handling, provider-aware payment and WhatsApp handoff services, QR/app-download payloads, fulfilment APIs, recurring plan execution, reconciliation, and automated tests.
 
-1. WhatsApp Business Platform OTP and transactional templates.
-2. Razorpay or Cashfree payment gateway for UPI, QR, cards, GPay, PhonePe, and Paytm.
-3. Store catalogue, live inventory, pricing, offers, and customer-specific saved baskets.
-4. Order webhooks, delivery-slot assignment, invoice generation, and notifications.
-5. Play Store and App Store release builds, with a QR code pointing to the store landing page or Firebase Dynamic Link.
+Before a live launch, configure the deployment with real provider values:
+
+1. WhatsApp Business Platform credentials and approved OTP/transactional templates.
+2. Razorpay or Cashfree keys, webhook signature verification, and settlement reporting.
+3. Production catalogue, live inventory, pricing, offers, and customer saved baskets.
+4. Invoice storage domain, notification delivery provider, and app download landing URL.
+5. Play Store and App Store signing, release builds, and QR code pointing to the production landing page.
+
+Backend code should be started with `SmartKiranaBackend.production(...)` and a `SmartKiranaBackendConfig.production(...)` value. Local tests continue to use `SmartKiranaBackend.seeded()`, which enables deterministic demo OTP behavior.
 
 
 ## Production backend scaffold
@@ -49,7 +55,7 @@ The repository now includes a Dart backend service scaffold at `lib/backend.dart
 - Checkout now creates a local Smart Kirana order record before WhatsApp/payment handoff.
 - Account includes recent order history with order status and WhatsApp resend support.
 - Customer address details are surfaced in the profile and included in the structured WhatsApp order message.
-- Digital payment selections can hand off to a UPI intent stub while the gateway integration is pending.
+- Digital payment selections create provider-shaped payment attempts and UPI intent payloads using configured store payment settings.
 
 ## Sprint 3 additions
 
@@ -66,7 +72,7 @@ The repository now includes a Dart backend service scaffold at `lib/backend.dart
 ## Sprint 5 additions
 
 - Recent orders now support a tracking timeline from received through delivered.
-- Account order cards include Track, WhatsApp, and demo status progression actions for UAT.
+- Account order cards include Track, WhatsApp, and status progression actions for UAT.
 - Tracking includes substitution-approval guidance for unavailable products before dispatch.
 
 ## Sprint 6 additions
@@ -139,7 +145,7 @@ The repository now includes a Dart backend service scaffold at `lib/backend.dart
 
 - Recent orders can now be cancelled before terminal statuses, with reason and refund preference capture.
 - Cancellation requests can be saved locally for UAT and shared to the store through WhatsApp with the order ID, reason, and refund mode.
-- Cancelled orders show a refund preference chip and no longer expose demo status advancement or repeat cancellation actions.
+- Cancelled orders show a refund preference chip and no longer expose status advancement or repeat cancellation actions.
 
 ## Sprint 18 additions
 

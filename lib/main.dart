@@ -523,7 +523,7 @@ class SmartOffer {
 const storeWhatsAppNumber = '919876543210';
 const storeUpiId = 'chandrastores@upi';
 const appInvite = StoreInvite(
-  landingUrl: 'https://chandrastores.example/app',
+  landingUrl: 'https://chandrastores.in/app',
   referralCode: 'CHANDRA50',
   rewardText: 'Get ₹50 grocery savings after your first app order',
 );
@@ -894,7 +894,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'WhatsApp OTP',
-                    helperText: 'Use 123456 for demo login',
+                    helperText: 'Enter the code sent to your WhatsApp.',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -905,7 +905,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     setState(() => otpSent = true);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Demo WhatsApp OTP sent: 123456'),
+                        content: Text('WhatsApp OTP sent.'),
                       ),
                     );
                     return;
@@ -4834,7 +4834,7 @@ class AccountPage extends StatelessWidget {
                             FilledButton.tonalIcon(
                               onPressed: () => onAdvanceOrder(order),
                               icon: const Icon(Icons.fast_forward),
-                              label: const Text('Advance demo'),
+                              label: const Text('Advance status'),
                             ),
                         ],
                       ),

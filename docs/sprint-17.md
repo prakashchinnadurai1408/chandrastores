@@ -10,7 +10,7 @@ Order cancellation and refund preference capture for customer self-service befor
 - Added a cancellation bottom sheet from recent orders so customers can choose why they are cancelling and how they prefer the refund handled.
 - Saved cancellation requests locally and moved the order status to `Cancelled` for UAT visibility.
 - Added a WhatsApp cancellation handoff containing the order ID, reason, and refund preference for store follow-up.
-- Hid cancellation and demo advancement actions once an order is delivered or cancelled, while surfacing the refund preference chip on the order card.
+- Hid cancellation and status advancement actions once an order is delivered or cancelled, while surfacing the refund preference chip on the order card.
 
 ## Backend handoff expected next
 

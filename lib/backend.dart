@@ -1,5 +1,82 @@
 import 'dart:math';
 
+class SmartKiranaBackendConfig {
+  const SmartKiranaBackendConfig({
+    required this.environment,
+    required this.apiBaseUrl,
+    required this.appDownloadUrl,
+    required this.storeUpiId,
+    required this.paymentGateway,
+    required this.whatsAppProvider,
+    required this.jwtIssuer,
+    this.demoMode = false,
+    this.requireWebhookSignature = true,
+  });
+
+  factory SmartKiranaBackendConfig.demo() => const SmartKiranaBackendConfig(
+    environment: 'demo',
+    apiBaseUrl: 'https://api.chandrastores.example',
+    appDownloadUrl: 'https://chandrastores.example/app',
+    storeUpiId: 'chandrastores@upi',
+    paymentGateway: 'razorpay',
+    whatsAppProvider: 'meta-whatsapp-business',
+    jwtIssuer: 'smart-kirana-demo',
+    demoMode: true,
+    requireWebhookSignature: false,
+  );
+
+  factory SmartKiranaBackendConfig.production({
+    required String apiBaseUrl,
+    required String appDownloadUrl,
+    required String storeUpiId,
+    String paymentGateway = 'razorpay',
+    String whatsAppProvider = 'meta-whatsapp-business',
+    String jwtIssuer = 'smart-kirana',
+  }) => SmartKiranaBackendConfig(
+    environment: 'production',
+    apiBaseUrl: apiBaseUrl,
+    appDownloadUrl: appDownloadUrl,
+    storeUpiId: storeUpiId,
+    paymentGateway: paymentGateway,
+    whatsAppProvider: whatsAppProvider,
+    jwtIssuer: jwtIssuer,
+  );
+
+  final String environment;
+  final String apiBaseUrl;
+  final String appDownloadUrl;
+  final String storeUpiId;
+  final String paymentGateway;
+  final String whatsAppProvider;
+  final String jwtIssuer;
+  final bool demoMode;
+  final bool requireWebhookSignature;
+
+  List<String> validate() {
+    final issues = <String>[];
+    final httpsUrl = RegExp(r'^https://');
+    if (!demoMode && !httpsUrl.hasMatch(apiBaseUrl)) {
+      issues.add('API_BASE_URL must be HTTPS in production.');
+    }
+    if (!demoMode && !httpsUrl.hasMatch(appDownloadUrl)) {
+      issues.add('APP_DOWNLOAD_URL must be HTTPS in production.');
+    }
+    if (!RegExp(r'^[\w.\-]+@[\w.\-]+$').hasMatch(storeUpiId)) {
+      issues.add('STORE_UPI_ID must be a valid UPI VPA.');
+    }
+    if (paymentGateway.trim().isEmpty) {
+      issues.add('PAYMENT_GATEWAY is required.');
+    }
+    if (whatsAppProvider.trim().isEmpty) {
+      issues.add('WHATSAPP_PROVIDER is required.');
+    }
+    if (jwtIssuer.trim().isEmpty) {
+      issues.add('JWT_ISSUER is required.');
+    }
+    return issues;
+  }
+}
+
 class BackendRequest {
   const BackendRequest({
     required this.method,
@@ -73,6 +150,10 @@ class ProductRecord {
 }
 
 class CustomerApi {
+  CustomerApi({required this.config, required this.whatsApp});
+
+  final SmartKiranaBackendConfig config;
+  final WhatsAppBusinessBackend whatsApp;
   final Map<String, Map<String, Object?>> _customersByMobile = {};
   final Map<String, String> _otpByRequestId = {};
   int _sequence = 1000;
@@ -83,7 +164,8 @@ class CustomerApi {
       return const ApiResponse(400, {'error': 'VALID_MOBILE_REQUIRED'});
     }
     final requestId = 'OTP${_sequence++}';
-    _otpByRequestId[requestId] = '123456';
+    final otp = config.demoMode ? '123456' : _generateOtp();
+    _otpByRequestId[requestId] = otp;
     _customersByMobile.putIfAbsent(
       mobile,
       () => {
@@ -93,10 +175,20 @@ class CustomerApi {
         'segment': 'regular',
       },
     );
+    whatsApp.sendTemplate({
+      'to': '91$mobile',
+      'template': 'login_otp',
+      'parameters': {
+        'requestId': requestId,
+        if (config.demoMode) 'otp': otp,
+      },
+    });
     return ApiResponse(202, {
       'requestId': requestId,
       'channel': 'whatsapp',
       'template': 'login_otp',
+      'deliveryStatus': 'queued',
+      if (config.demoMode) 'otp': otp,
     });
   }
 
@@ -109,9 +201,14 @@ class CustomerApi {
     }
     _otpByRequestId.remove(requestId);
     return ApiResponse(200, {
-      'token': 'demo.jwt.$requestId',
+      'token': '${config.jwtIssuer}.jwt.$requestId',
       'customer': _customersByMobile[mobile],
     });
+  }
+
+  String _generateOtp() {
+    final value = Random.secure().nextInt(900000) + 100000;
+    return '$value';
   }
 }
 
@@ -305,6 +402,9 @@ class OrderCreationApi {
 }
 
 class PaymentGatewayBackend {
+  PaymentGatewayBackend(this.config);
+
+  final SmartKiranaBackendConfig config;
   final Map<String, Map<String, Object?>> attempts = {};
   final Map<String, Map<String, Object?>> refunds = {};
 
@@ -315,15 +415,20 @@ class PaymentGatewayBackend {
       'paymentId': paymentId,
       'orderId': body['orderId'],
       'amount': amount,
-      'gateway': body['gateway'] ?? 'razorpay',
+      'gateway': body['gateway'] ?? config.paymentGateway,
       'status': 'created',
-      'upiIntent': 'upi://pay?pa=chandrastores@upi&am=$amount&cu=INR',
+      'upiIntent': 'upi://pay?pa=${config.storeUpiId}&am=$amount&cu=INR',
+      'webhookRequired': config.requireWebhookSignature,
     };
     attempts[paymentId] = attempt;
     return ApiResponse(201, {'payment': attempt});
   }
 
   ApiResponse webhook(Map<String, Object?> body) {
+    if (config.requireWebhookSignature &&
+        '${body['signature'] ?? ''}'.trim().isEmpty) {
+      return const ApiResponse(401, {'error': 'WEBHOOK_SIGNATURE_REQUIRED'});
+    }
     final paymentId = '${body['paymentId'] ?? ''}';
     final attempt = attempts[paymentId];
     if (attempt == null) {
@@ -355,6 +460,9 @@ class PaymentGatewayBackend {
 }
 
 class WhatsAppBusinessBackend {
+  WhatsAppBusinessBackend(this.config);
+
+  final SmartKiranaBackendConfig config;
   final List<Map<String, Object?>> outbox = [];
 
   ApiResponse sendTemplate(Map<String, Object?> body) {
@@ -363,6 +471,7 @@ class WhatsAppBusinessBackend {
       'to': body['to'],
       'template': body['template'] ?? 'order_update',
       'parameters': body['parameters'] ?? {},
+      'provider': config.whatsAppProvider,
       'status': 'queued',
     };
     outbox.add(message);
@@ -430,6 +539,9 @@ class DeliverySlotService {
 }
 
 class InvoiceService {
+  InvoiceService(this.config);
+
+  final SmartKiranaBackendConfig config;
   final Map<String, Map<String, Object?>> invoices = {};
 
   ApiResponse generate(Map<String, Object?> body) {
@@ -440,8 +552,7 @@ class InvoiceService {
       'type': body['type'] ?? 'Retail bill',
       'billingName': body['billingName'] ?? 'Customer',
       'status': 'generated',
-      'downloadUrl':
-          'https://api.chandrastores.example/invoices/$invoiceId.pdf',
+      'downloadUrl': '${config.apiBaseUrl}/invoices/$invoiceId.pdf',
     };
     invoices[invoiceId] = invoice;
     return ApiResponse(201, {'invoice': invoice});
@@ -780,8 +891,12 @@ class QrScanVerifyApi {
 }
 
 class QrDownloadService {
+  QrDownloadService(this.config);
+
+  final SmartKiranaBackendConfig config;
+
   ApiResponse appDownloadQr({String channel = 'counter'}) => ApiResponse(200, {
-    'landingUrl': 'https://chandrastores.example/app?channel=$channel',
+    'landingUrl': '${config.appDownloadUrl}?channel=$channel',
     'qrPayload': 'smartkirana://download?channel=$channel',
     'playStoreUrl':
         'https://play.google.com/store/apps/details?id=com.chandrastores.smartkirana',
@@ -1169,13 +1284,25 @@ class AuditLogService {
 }
 
 class HealthCheckService {
-  ApiResponse ready({required SmartKiranaBackend backend}) => ApiResponse(200, {
-    'status': 'ready',
-    'products': backend.products.length,
-    'orders': backend.orderCreationApi.orders.length,
-    'auditEvents': backend.auditLogService.events.length,
-    'idempotencyKeys': backend.idempotencyStore.size,
-  });
+  ApiResponse ready({required SmartKiranaBackend backend}) {
+    final configIssues = backend.config.validate();
+    final ready = configIssues.isEmpty;
+    return ApiResponse(ready ? 200 : 503, {
+      'status': ready ? 'ready' : 'misconfigured',
+      'environment': backend.config.environment,
+      'demoMode': backend.config.demoMode,
+      'configIssues': configIssues,
+      'providers': {
+        'paymentGateway': backend.config.paymentGateway,
+        'whatsAppProvider': backend.config.whatsAppProvider,
+        'webhookSignatureRequired': backend.config.requireWebhookSignature,
+      },
+      'products': backend.products.length,
+      'orders': backend.orderCreationApi.orders.length,
+      'auditEvents': backend.auditLogService.events.length,
+      'idempotencyKeys': backend.idempotencyStore.size,
+    });
+  }
 }
 
 class PaymentReconciliationService {
@@ -1272,9 +1399,26 @@ class PaymentReconciliationService {
 }
 
 class SmartKiranaBackend {
-  SmartKiranaBackend.seeded()
-    : products = _seedProducts(),
-      customerApi = CustomerApi() {
+  SmartKiranaBackend.seeded({
+    SmartKiranaBackendConfig? config,
+  }) : config = config ?? SmartKiranaBackendConfig.demo(),
+       products = _seedProducts() {
+    _wireServices(this.config);
+  }
+
+  SmartKiranaBackend.production({
+    required SmartKiranaBackendConfig config,
+  }) : config = config,
+       products = _seedProducts() {
+    _wireServices(config);
+  }
+
+  void _wireServices(SmartKiranaBackendConfig runtimeConfig) {
+    whatsAppBusinessBackend = WhatsAppBusinessBackend(runtimeConfig);
+    customerApi = CustomerApi(
+      config: runtimeConfig,
+      whatsApp: whatsAppBusinessBackend,
+    );
     catalogueApi = CatalogueApi(products);
     inventoryService = InventoryService(products);
     pricingOfferEngine = PricingOfferEngine(products);
@@ -1282,10 +1426,9 @@ class SmartKiranaBackend {
       inventory: inventoryService,
       pricing: pricingOfferEngine,
     );
-    paymentGatewayBackend = PaymentGatewayBackend();
-    whatsAppBusinessBackend = WhatsAppBusinessBackend();
+    paymentGatewayBackend = PaymentGatewayBackend(runtimeConfig);
     deliverySlotService = DeliverySlotService();
-    invoiceService = InvoiceService();
+    invoiceService = InvoiceService(runtimeConfig);
     notificationService = NotificationService();
     adminDashboardService = AdminDashboardService(
       orders: orderCreationApi,
@@ -1293,7 +1436,7 @@ class SmartKiranaBackend {
     );
     staffFulfilmentService = StaffFulfilmentService(orderCreationApi);
     qrScanVerifyApi = QrScanVerifyApi(orderCreationApi);
-    qrDownloadService = QrDownloadService();
+    qrDownloadService = QrDownloadService(runtimeConfig);
     rewardWalletService = RewardWalletService();
     supportTicketBackend = SupportTicketBackend();
     deliveryTrackingService = DeliveryTrackingService();
@@ -1325,8 +1468,9 @@ class SmartKiranaBackend {
     );
   }
 
+  final SmartKiranaBackendConfig config;
   final Map<String, ProductRecord> products;
-  final CustomerApi customerApi;
+  late final CustomerApi customerApi;
   late final CatalogueApi catalogueApi;
   late final InventoryService inventoryService;
   late final PricingOfferEngine pricingOfferEngine;

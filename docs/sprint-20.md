@@ -10,7 +10,7 @@ Invoice and bill request workflow for customers who need retail bills, GST invoi
 - Added invoice request state per order and surfaced saved invoice request chips on recent order cards.
 - Added an invoice request bottom sheet where customers can choose invoice type and provide billing details.
 - Added WhatsApp invoice handoff so the store receives structured billing details for manual follow-up.
-- Added invoice actions to recent orders alongside tracking, WhatsApp, feedback, support, cancellation, and demo status controls.
+- Added invoice actions to recent orders alongside tracking, WhatsApp, feedback, support, cancellation, and status controls.
 
 ## Backend handoff expected next
 
