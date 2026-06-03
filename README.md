@@ -39,6 +39,11 @@ The current repository now contains the customer-facing mobile app shell and UX 
 4. Order webhooks, delivery-slot assignment, invoice generation, and notifications.
 5. Play Store and App Store release builds, with a QR code pointing to the store landing page or Firebase Dynamic Link.
 
+
+## Production backend scaffold
+
+The repository now includes a Dart backend service scaffold at `lib/backend.dart` with Customer API, catalogue API, inventory reservation, pricing/offers, order creation, payment attempts/webhooks, WhatsApp template queue, delivery slots, invoices, notifications, admin dashboard summaries, staff fulfilment status updates, and QR scan verification. See `docs/backend-architecture.md` for the route map and production hardening checklist.
+
 ## Sprint 2 additions
 
 - Checkout now creates a local Smart Kirana order record before WhatsApp/payment handoff.
@@ -99,3 +104,158 @@ The current repository now contains the customer-facing mobile app shell and UX 
 - Account includes an app invite card with landing link, referral code, and reward copy.
 - Customers can share a prefilled Smart Kirana download invite through WhatsApp.
 - Referral copy prepares the app for QR/app-link acquisition and future first-order reward tracking.
+
+## Sprint 12 additions
+
+- Account includes a monthly grocery statement with order count, spend, digital-payment share, and category breakdown.
+- Customers can share a compact monthly statement over WhatsApp for family budgeting or reconciliation.
+- Statement logic prepares the app for future invoice/PDF downloads and automated monthly summaries.
+
+## Sprint 13 additions
+
+- Recent orders include support ticket actions for missing, wrong, damaged, late, payment, and refund issues.
+- Support tickets capture issue type, priority, and description, then can be saved locally or shared on WhatsApp.
+- Submitted support tickets appear on order cards for UAT visibility before backend ticket persistence is connected.
+
+## Sprint 14 additions
+
+- Cart quantity controls now prevent customers from exceeding available stock for each product.
+- Checkout communicates a 15-minute stock reservation window while payment/WhatsApp confirmation completes.
+- Order confirmation, WhatsApp handoff, and tracking include reservation expiry details for fulfilment confidence.
+
+## Sprint 15 additions
+
+- Account includes a notification center for order updates, recurring plan reminders, and support ticket status.
+- Notification digest sharing creates a compact WhatsApp summary of recent customer updates.
+- Local notification generation prepares the app for Firebase/WhatsApp notification APIs and read-state tracking.
+
+## Sprint 16 additions
+
+- Checkout now calculates delivery fees by selected slot and shows free-delivery eligibility for larger baskets.
+- Order totals store delivery fee separately from subtotal, discounts, and payable amount.
+- WhatsApp handoff, confirmation, and tracking include delivery fee details for clearer reconciliation.
+
+## Sprint 17 additions
+
+- Recent orders can now be cancelled before terminal statuses, with reason and refund preference capture.
+- Cancellation requests can be saved locally for UAT and shared to the store through WhatsApp with the order ID, reason, and refund mode.
+- Cancelled orders show a refund preference chip and no longer expose demo status advancement or repeat cancellation actions.
+
+## Sprint 18 additions
+
+- Cart now supports household approval requests before checkout for high-value weekly or monthly baskets.
+- Customers can pick a family approver, add a note, save the approval locally, or send a WhatsApp approval request.
+- Account includes a household approvals card with recent approval requests and WhatsApp resend actions.
+
+## Sprint 19 additions
+
+- Account now includes a reward center showing available loyalty points and redeemable grocery vouchers.
+- Customers can redeem eligible vouchers locally or share reward details through WhatsApp for family/store coordination.
+- Reward state tracks redeemed voucher codes so UAT can validate loyalty burn before gateway-backed coupon redemption is connected.
+
+## Sprint 20 additions
+
+- Recent orders now include invoice request actions for retail bills, GST invoices, monthly statements, and khata ledger copies.
+- Customers can capture billing name, optional GSTIN, and optional email, then save the invoice request locally or send it to the store on WhatsApp.
+- Order cards show invoice request chips so UAT can confirm bill-request status before backend invoice generation is connected.
+
+## Sprint 21 additions
+
+- Checkout now includes an address selector so customers can choose saved Home, Parents, or Office delivery locations before placing an order.
+- WhatsApp order handoff includes the selected address label, address line, and landmark for clearer delivery planning.
+- Account now includes an address book card so customers can switch the active delivery address during UAT.
+
+## Sprint 22 additions
+
+- Recent orders now include a Repeat action so customers can rebuild a previous basket into the cart quickly.
+- Repeat order logic restores repeatable in-stock quantities, delivery slot, selected address, delivery instruction, and substitution preference.
+- Stock-aware repeat handling skips unavailable lines and moves customers directly to the cart for final review before checkout.
+
+## Sprint 23 additions
+
+- Recent orders now include payment proof capture for UPI, cards, QR, wallet, and cash reconciliation.
+- Customers can save payment method, reference number, and paid amount locally or send the proof to the store over WhatsApp.
+- Order cards show paid/reference chips so UAT can validate payment reconciliation before gateway webhooks are connected.
+
+## Sprint 24 additions
+
+- Cart now includes a monthly budget guard that compares current monthly spend, this cart projection, and the customer budget limit.
+- Customers see progress, remaining budget, or over-budget guidance before checkout.
+- Budget guardrails prepare the app for backend household budgets, spend alerts, and planned grocery controls.
+
+## Sprint 25 additions
+
+- Recent orders now include delivery reschedule requests for non-terminal orders.
+- Customers can request a new delivery slot, choose a reason, add a store note, save locally, or send the request on WhatsApp.
+- Order cards show reschedule chips so UAT can validate slot-change workflows before fulfilment APIs are connected.
+
+
+## Sprint 26 additions
+
+- Checkout now supports fulfilment mode selection between home delivery and store pickup.
+- Store pickup removes delivery fees while keeping slot, payment, address, and substitution review in the cart.
+- Repeat order and WhatsApp handoff preserve/show the selected fulfilment mode for clearer store operations.
+
+
+## Sprint 27 additions
+
+- Orders now generate a pickup or delivery handoff code from the order ID for counter/rider verification.
+- Store pickup orders expose a pickup pass with QR-style presentation, slot, address, payment, and guidance for the customer.
+- Order confirmation, tracking, recent-order chips, and WhatsApp handoff now include the pickup/delivery code for clearer fulfilment.
+
+
+## Partly-built feature backend completion
+
+The backend scaffold now includes completion paths for the previously partial production features: WhatsApp OTP plus transactional templates, payment attempts/webhooks/refunds, app-download QR payloads, pickup QR/pass scan verification with audit logs, notification queues, rewards/wallet ledger operations, invoice generation, support tickets, delivery tracking events, and recurring grocery plan APIs.
+
+
+## Sprint 28 additions
+
+- Backend scaffold now supports idempotent POST retries through `x-idempotency-key` so duplicate order/payment/support submissions can safely replay the first successful response.
+- Every backend request is captured in an audit log with actor, path, status code, idempotency key, replay flag, and timestamp.
+- Added `/health` and `/audit/events` operational routes to prepare the backend scaffold for deployment probes and admin observability.
+
+
+## Sprint 29 additions
+
+- Backend scaffold now evaluates store-owner alerts across low stock, payment attention, WhatsApp template failures, high-priority support tickets, and open fulfilment orders.
+- Added `/admin/alerts` for operational alert summaries and `/admin/alerts/notify` to queue an admin notification for store-owner review.
+- Alert output includes severity counts so the admin/store dashboard can prioritise critical issues first.
+
+
+## Sprint 30 additions
+
+- Store-owner alerts now have lifecycle state for open, acknowledged, and resolved incidents.
+- Added `/admin/alerts/acknowledge` to assign an alert with a note and `/admin/alerts/resolve` to remove resolved incidents from active alert output.
+- Alert summaries now include acknowledged counts so the admin dashboard can separate new work from already-owned incidents.
+
+
+## Sprint 31 additions
+
+- Backend scaffold now protects admin, audit, and staff fulfilment routes using a role access guard based on `x-role` headers.
+- Anonymous access to `/admin/*`, `/audit/events`, and `/staff/*` returns structured `403 FORBIDDEN` metadata with required and actual roles.
+- Tests now cover denied anonymous access and allowed admin access so RBAC handoff work is visible before JWT/scoped auth integration.
+
+## Sprint 32 additions
+
+- Staff fulfilment now exposes `/staff/orders/queue` for open orders with slot, payable, fulfilment mode, item count, and assignment state.
+- Added `/staff/orders/{orderId}/assign` and `/staff/orders/{orderId}/pack` so picker/packer handoffs are testable before the dedicated staff app is wired.
+- Backend tests now cover protected queue access, assignment metadata, packing status transitions, and queue replay of packed assignment state.
+
+## Sprint 33 additions
+
+- Delivery operations now expose `/delivery/routes/plan`, `/delivery/routes/{routeId}/dispatch`, and `/delivery/routes` for packed home-delivery order routing.
+- Route planning assigns packed orders to a rider manifest and dispatch updates order status to `Out for delivery`.
+- Dispatch automatically writes tracking timeline events so the customer app can show rider progress once the route is sent out.
+
+## Sprint 34 additions
+
+- Recurring grocery plans now expose `/recurring-plans/run-due` to create orders from active weekly, biweekly, or monthly baskets.
+- Successful runs refresh plan metadata with last order, last run time, next run time, and run count.
+- Plan execution now queues customer notifications and WhatsApp transactional messages so recurring order creation is visible to customers.
+
+## Sprint 35 additions
+
+- Admin operations now expose `/admin/reconciliation` to compare orders, captured payments, refunds, invoices, and pending balances.
+- Reconciliation rows include payable amount, paid amount, balance, payment status, invoice status, and invoice IDs for daily closing UAT.
+- Backend tests now cover protected admin access, captured payment, refund subtraction, invoice generation, and settled reconciliation rows.
