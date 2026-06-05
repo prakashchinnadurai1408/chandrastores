@@ -1,7 +1,8 @@
+import 'dart:convert';
 import 'dart:math';
 
 class SmartKiranaBackendConfig {
-  const SmartKiranaBackendConfig({
+  SmartKiranaBackendConfig({
     required this.environment,
     required this.apiBaseUrl,
     required this.appDownloadUrl,
@@ -9,21 +10,37 @@ class SmartKiranaBackendConfig {
     required this.paymentGateway,
     required this.whatsAppProvider,
     required this.jwtIssuer,
+    this.whatsAppPhoneNumberId = '',
+    this.whatsAppTemplateNamespace = '',
+    this.razorpayKeyId = '',
+    this.cashfreeClientId = '',
+    this.paymentWebhookSecretConfigured = false,
+    this.settlementCron = '0 22 * * *',
+    this.databaseUrlConfigured = false,
+    this.storageProvider = 'in-memory-uAT',
+    this.jwtAudience = 'smart-kirana-users',
+    this.jwtSecretConfigured = false,
+    this.androidPackageId = 'com.chandrastores.smartkirana',
+    this.iosBundleId = 'in.chandrastores.smartkirana',
+    this.playStoreUrl =
+        'https://play.google.com/store/apps/details?id=com.chandrastores.smartkirana',
+    this.appStoreUrl =
+        'https://apps.apple.com/app/smart-kirana-chandra-stores/id0000000000',
     this.demoMode = false,
     this.requireWebhookSignature = true,
   });
 
-  factory SmartKiranaBackendConfig.demo() => const SmartKiranaBackendConfig(
-    environment: 'demo',
-    apiBaseUrl: 'https://api.chandrastores.example',
-    appDownloadUrl: 'https://chandrastores.example/app',
-    storeUpiId: 'chandrastores@upi',
-    paymentGateway: 'razorpay',
-    whatsAppProvider: 'meta-whatsapp-business',
-    jwtIssuer: 'smart-kirana-demo',
-    demoMode: true,
-    requireWebhookSignature: false,
-  );
+  factory SmartKiranaBackendConfig.demo() => SmartKiranaBackendConfig(
+        environment: 'demo',
+        apiBaseUrl: 'https://api.chandrastores.example',
+        appDownloadUrl: 'https://chandrastores.example/app',
+        storeUpiId: 'chandrastores@upi',
+        paymentGateway: 'razorpay',
+        whatsAppProvider: 'meta-whatsapp-business',
+        jwtIssuer: 'smart-kirana-demo',
+        demoMode: true,
+        requireWebhookSignature: false,
+      );
 
   factory SmartKiranaBackendConfig.production({
     required String apiBaseUrl,
@@ -32,25 +49,115 @@ class SmartKiranaBackendConfig {
     String paymentGateway = 'razorpay',
     String whatsAppProvider = 'meta-whatsapp-business',
     String jwtIssuer = 'smart-kirana',
-  }) => SmartKiranaBackendConfig(
-    environment: 'production',
-    apiBaseUrl: apiBaseUrl,
-    appDownloadUrl: appDownloadUrl,
-    storeUpiId: storeUpiId,
-    paymentGateway: paymentGateway,
-    whatsAppProvider: whatsAppProvider,
-    jwtIssuer: jwtIssuer,
-  );
+  }) =>
+      SmartKiranaBackendConfig(
+        environment: 'production',
+        apiBaseUrl: apiBaseUrl,
+        appDownloadUrl: appDownloadUrl,
+        storeUpiId: storeUpiId,
+        paymentGateway: paymentGateway,
+        whatsAppProvider: whatsAppProvider,
+        jwtIssuer: jwtIssuer,
+      );
 
-  final String environment;
-  final String apiBaseUrl;
-  final String appDownloadUrl;
-  final String storeUpiId;
-  final String paymentGateway;
-  final String whatsAppProvider;
-  final String jwtIssuer;
+  String environment;
+  String apiBaseUrl;
+  String appDownloadUrl;
+  String storeUpiId;
+  String paymentGateway;
+  String whatsAppProvider;
+  String jwtIssuer;
+  String whatsAppPhoneNumberId;
+  String whatsAppTemplateNamespace;
+  String razorpayKeyId;
+  String cashfreeClientId;
+  bool paymentWebhookSecretConfigured;
+  String settlementCron;
+  bool databaseUrlConfigured;
+  String storageProvider;
+  String jwtAudience;
+  bool jwtSecretConfigured;
+  String androidPackageId;
+  String iosBundleId;
+  String playStoreUrl;
+  String appStoreUrl;
   final bool demoMode;
-  final bool requireWebhookSignature;
+  bool requireWebhookSignature;
+
+  Map<String, Object?> toJson() => {
+        'environment': environment,
+        'apiBaseUrl': apiBaseUrl,
+        'appDownloadUrl': appDownloadUrl,
+        'storeUpiId': storeUpiId,
+        'paymentGateway': paymentGateway,
+        'whatsAppProvider': whatsAppProvider,
+        'whatsAppPhoneNumberId': whatsAppPhoneNumberId,
+        'whatsAppTemplateNamespace': whatsAppTemplateNamespace,
+        'razorpayKeyId': _redact(razorpayKeyId),
+        'cashfreeClientId': _redact(cashfreeClientId),
+        'paymentWebhookSecretConfigured': paymentWebhookSecretConfigured,
+        'settlementCron': settlementCron,
+        'databaseUrlConfigured': databaseUrlConfigured,
+        'storageProvider': storageProvider,
+        'jwtIssuer': jwtIssuer,
+        'jwtAudience': jwtAudience,
+        'jwtSecretConfigured': jwtSecretConfigured,
+        'androidPackageId': androidPackageId,
+        'iosBundleId': iosBundleId,
+        'playStoreUrl': playStoreUrl,
+        'appStoreUrl': appStoreUrl,
+        'demoMode': demoMode,
+        'requireWebhookSignature': requireWebhookSignature,
+      };
+
+  void update(Map<String, Object?> body) {
+    environment = _string(body, 'environment', environment);
+    apiBaseUrl = _string(body, 'apiBaseUrl', apiBaseUrl);
+    appDownloadUrl = _string(body, 'appDownloadUrl', appDownloadUrl);
+    storeUpiId = _string(body, 'storeUpiId', storeUpiId);
+    paymentGateway = _string(body, 'paymentGateway', paymentGateway);
+    whatsAppProvider = _string(body, 'whatsAppProvider', whatsAppProvider);
+    whatsAppPhoneNumberId = _string(
+      body,
+      'whatsAppPhoneNumberId',
+      whatsAppPhoneNumberId,
+    );
+    whatsAppTemplateNamespace = _string(
+      body,
+      'whatsAppTemplateNamespace',
+      whatsAppTemplateNamespace,
+    );
+    razorpayKeyId = _string(body, 'razorpayKeyId', razorpayKeyId);
+    cashfreeClientId = _string(body, 'cashfreeClientId', cashfreeClientId);
+    paymentWebhookSecretConfigured = _bool(
+      body,
+      'paymentWebhookSecretConfigured',
+      paymentWebhookSecretConfigured,
+    );
+    settlementCron = _string(body, 'settlementCron', settlementCron);
+    databaseUrlConfigured = _bool(
+      body,
+      'databaseUrlConfigured',
+      databaseUrlConfigured,
+    );
+    storageProvider = _string(body, 'storageProvider', storageProvider);
+    jwtIssuer = _string(body, 'jwtIssuer', jwtIssuer);
+    jwtAudience = _string(body, 'jwtAudience', jwtAudience);
+    jwtSecretConfigured = _bool(
+      body,
+      'jwtSecretConfigured',
+      jwtSecretConfigured,
+    );
+    androidPackageId = _string(body, 'androidPackageId', androidPackageId);
+    iosBundleId = _string(body, 'iosBundleId', iosBundleId);
+    playStoreUrl = _string(body, 'playStoreUrl', playStoreUrl);
+    appStoreUrl = _string(body, 'appStoreUrl', appStoreUrl);
+    requireWebhookSignature = _bool(
+      body,
+      'requireWebhookSignature',
+      requireWebhookSignature,
+    );
+  }
 
   List<String> validate() {
     final issues = <String>[];
@@ -73,7 +180,41 @@ class SmartKiranaBackendConfig {
     if (jwtIssuer.trim().isEmpty) {
       issues.add('JWT_ISSUER is required.');
     }
+    if (!demoMode &&
+        requireWebhookSignature &&
+        !paymentWebhookSecretConfigured) {
+      issues.add('PAYMENT_WEBHOOK_SECRET must be configured in production.');
+    }
+    if (!demoMode && !databaseUrlConfigured) {
+      issues.add('DATABASE_URL must be configured for production storage.');
+    }
+    if (!demoMode && !jwtSecretConfigured) {
+      issues.add('JWT_SECRET must be configured for production auth.');
+    }
     return issues;
+  }
+
+  static String _string(
+    Map<String, Object?> body,
+    String key,
+    String fallback,
+  ) {
+    final value = body[key];
+    if (value == null) return fallback;
+    return '$value'.trim();
+  }
+
+  static bool _bool(Map<String, Object?> body, String key, bool fallback) {
+    final value = body[key];
+    if (value == null) return fallback;
+    if (value is bool) return value;
+    return '$value'.toLowerCase() == 'true';
+  }
+
+  static String _redact(String value) {
+    if (value.isEmpty) return '';
+    if (value.length <= 4) return '****';
+    return '****${value.substring(value.length - 4)}';
   }
 }
 
@@ -123,40 +264,67 @@ class ProductRecord {
   final int reorderLevel;
   final bool active;
 
-  ProductRecord copyWith({int? stockQty, bool? active}) => ProductRecord(
-    id: id,
-    name: name,
-    category: category,
-    packSize: packSize,
-    price: price,
-    mrp: mrp,
-    stockQty: stockQty ?? this.stockQty,
-    reorderLevel: reorderLevel,
-    active: active ?? this.active,
-  );
+  ProductRecord copyWith({
+    String? name,
+    String? category,
+    String? packSize,
+    int? price,
+    int? mrp,
+    int? stockQty,
+    int? reorderLevel,
+    bool? active,
+  }) =>
+      ProductRecord(
+        id: id,
+        name: name ?? this.name,
+        category: category ?? this.category,
+        packSize: packSize ?? this.packSize,
+        price: price ?? this.price,
+        mrp: mrp ?? this.mrp,
+        stockQty: stockQty ?? this.stockQty,
+        reorderLevel: reorderLevel ?? this.reorderLevel,
+        active: active ?? this.active,
+      );
+
+  factory ProductRecord.fromJson(Map<String, Object?> json) => ProductRecord(
+        id: '${json['id']}',
+        name: '${json['name']}',
+        category: '${json['category']}',
+        packSize: '${json['packSize']}',
+        price: _int(json['price']),
+        mrp: _int(json['mrp']),
+        stockQty: _int(json['stockQty']),
+        reorderLevel: _int(json['reorderLevel']),
+        active: json['active'] is bool ? json['active']! as bool : true,
+      );
 
   Map<String, Object?> toJson() => {
-    'id': id,
-    'name': name,
-    'category': category,
-    'packSize': packSize,
-    'price': price,
-    'mrp': mrp,
-    'stockQty': stockQty,
-    'reorderLevel': reorderLevel,
-    'active': active,
-    'lowStock': stockQty <= reorderLevel,
-  };
+        'id': id,
+        'name': name,
+        'category': category,
+        'packSize': packSize,
+        'price': price,
+        'mrp': mrp,
+        'stockQty': stockQty,
+        'reorderLevel': reorderLevel,
+        'active': active,
+        'lowStock': stockQty <= reorderLevel,
+      };
 }
 
 class CustomerApi {
-  CustomerApi({required this.config, required this.whatsApp});
+  CustomerApi(
+      {required this.config, required this.whatsApp, required this.auth});
 
   final SmartKiranaBackendConfig config;
   final WhatsAppBusinessBackend whatsApp;
+  final AuthTokenService auth;
   final Map<String, Map<String, Object?>> _customersByMobile = {};
   final Map<String, String> _otpByRequestId = {};
   int _sequence = 1000;
+
+  List<Map<String, Object?>> get customers =>
+      _customersByMobile.values.toList();
 
   ApiResponse startOtp(Map<String, Object?> body) {
     final mobile = '${body['mobile'] ?? ''}'.trim();
@@ -200,9 +368,13 @@ class CustomerApi {
       return const ApiResponse(401, {'error': 'INVALID_OTP'});
     }
     _otpByRequestId.remove(requestId);
+    final customer = _customersByMobile[mobile];
     return ApiResponse(200, {
-      'token': '${config.jwtIssuer}.jwt.$requestId',
-      'customer': _customersByMobile[mobile],
+      'token': auth.issueToken(
+        subject: '${customer?['customerId'] ?? 'guest'}',
+        role: 'customer',
+      ),
+      'customer': customer,
     });
   }
 
@@ -243,6 +415,31 @@ class CatalogueApi {
       return const ApiResponse(404, {'error': 'PRODUCT_NOT_FOUND'});
     }
     return ApiResponse(200, {'product': product.toJson()});
+  }
+
+  ApiResponse upsert(Map<String, Object?> body) {
+    final productId = '${body['id'] ?? body['productId'] ?? ''}'.trim();
+    if (productId.isEmpty) {
+      return const ApiResponse(400, {'error': 'PRODUCT_ID_REQUIRED'});
+    }
+    final current = _products[productId];
+    final record = current == null
+        ? ProductRecord.fromJson({...body, 'id': productId})
+        : current.copyWith(
+            name: body['name'] == null ? null : '${body['name']}',
+            category: body['category'] == null ? null : '${body['category']}',
+            packSize: body['packSize'] == null ? null : '${body['packSize']}',
+            price: body['price'] == null ? null : _int(body['price']),
+            mrp: body['mrp'] == null ? null : _int(body['mrp']),
+            stockQty: body['stockQty'] == null ? null : _int(body['stockQty']),
+            reorderLevel: body['reorderLevel'] == null
+                ? null
+                : _int(body['reorderLevel']),
+            active: body['active'] is bool ? body['active']! as bool : null,
+          );
+    _products[productId] = record;
+    return ApiResponse(
+        current == null ? 201 : 200, {'product': record.toJson()});
   }
 }
 
@@ -416,9 +613,17 @@ class PaymentGatewayBackend {
       'orderId': body['orderId'],
       'amount': amount,
       'gateway': body['gateway'] ?? config.paymentGateway,
+      'gatewayMode': config.paymentGateway == 'cashfree'
+          ? 'cashfree_orders'
+          : 'razorpay_standard_checkout',
+      'gatewayCredentialConfigured': config.paymentGateway == 'cashfree'
+          ? config.cashfreeClientId.isNotEmpty
+          : config.razorpayKeyId.isNotEmpty,
       'status': 'created',
       'upiIntent': 'upi://pay?pa=${config.storeUpiId}&am=$amount&cu=INR',
       'webhookRequired': config.requireWebhookSignature,
+      'webhookSecretConfigured': config.paymentWebhookSecretConfigured,
+      'settlementCron': config.settlementCron,
     };
     attempts[paymentId] = attempt;
     return ApiResponse(201, {'payment': attempt});
@@ -472,6 +677,8 @@ class WhatsAppBusinessBackend {
       'template': body['template'] ?? 'order_update',
       'parameters': body['parameters'] ?? {},
       'provider': config.whatsAppProvider,
+      'phoneNumberId': config.whatsAppPhoneNumberId,
+      'templateNamespace': config.whatsAppTemplateNamespace,
       'status': 'queued',
     };
     outbox.add(message);
@@ -480,8 +687,7 @@ class WhatsAppBusinessBackend {
 
   ApiResponse sendTransactional(Map<String, Object?> body) {
     final event = '${body['event'] ?? 'order_received'}';
-    final template =
-        {
+    final template = {
           'order_received': 'order_received_v1',
           'payment_captured': 'payment_success_v1',
           'pickup_ready': 'pickup_ready_v1',
@@ -522,18 +728,15 @@ class DeliverySlotService {
   ];
 
   ApiResponse available({String fulfilmentMode = 'Home delivery'}) {
-    final filtered = slots
-        .where((slot) {
-          final label = '${slot['label']}';
-          if (fulfilmentMode == 'Store pickup') return label.contains('pickup');
-          return !label.contains('pickup');
-        })
-        .map((slot) {
-          final capacity = slot['capacity'] as int;
-          final booked = slot['booked'] as int;
-          return {...slot, 'available': capacity - booked};
-        })
-        .toList();
+    final filtered = slots.where((slot) {
+      final label = '${slot['label']}';
+      if (fulfilmentMode == 'Store pickup') return label.contains('pickup');
+      return !label.contains('pickup');
+    }).map((slot) {
+      final capacity = slot['capacity'] as int;
+      final booked = slot['booked'] as int;
+      return {...slot, 'available': capacity - booked};
+    }).toList();
     return ApiResponse(200, {'slots': filtered});
   }
 }
@@ -623,9 +826,9 @@ class StoreAlertService {
       alertStates[alertId] ?? {'status': 'open'};
 
   Map<String, Object?> _mergeState(Map<String, Object?> alert) => {
-    ...alert,
-    ..._stateFor('${alert['alertId']}'),
-  };
+        ...alert,
+        ..._stateFor('${alert['alertId']}'),
+      };
 
   ApiResponse evaluate() {
     final alerts = <Map<String, Object?>>[];
@@ -704,9 +907,8 @@ class StoreAlertService {
       'criticalCount': visibleAlerts
           .where((alert) => alert['severity'] == 'critical')
           .length,
-      'warningCount': visibleAlerts
-          .where((alert) => alert['severity'] == 'warning')
-          .length,
+      'warningCount':
+          visibleAlerts.where((alert) => alert['severity'] == 'warning').length,
       'acknowledgedCount': visibleAlerts
           .where((alert) => alert['status'] == 'acknowledged')
           .length,
@@ -770,23 +972,22 @@ class StaffFulfilmentService {
         .where((order) => !_isTerminal('${order['status']}'))
         .where((order) => status == null || '${order['status']}' == status)
         .map((order) {
-          final orderId = '${order['orderId']}';
-          final quote = order['quote']! as Map<String, Object?>;
-          final items = quote['lines']! as List<Map<String, Object?>>;
-          final assignment = assignments[orderId];
-          return {
-            'orderId': orderId,
-            'status': order['status'],
-            'customerId': order['customerId'],
-            'fulfilmentMode': quote['fulfilmentMode'],
-            'slot': quote['slot'],
-            'payable': quote['payable'],
-            'itemCount': items.length,
-            'assignedTo': assignment?['staffId'],
-            'assignmentStatus': assignment?['status'] ?? 'unassigned',
-          };
-        })
-        .toList();
+      final orderId = '${order['orderId']}';
+      final quote = order['quote']! as Map<String, Object?>;
+      final items = quote['lines']! as List<Map<String, Object?>>;
+      final assignment = assignments[orderId];
+      return {
+        'orderId': orderId,
+        'status': order['status'],
+        'customerId': order['customerId'],
+        'fulfilmentMode': quote['fulfilmentMode'],
+        'slot': quote['slot'],
+        'payable': quote['payable'],
+        'itemCount': items.length,
+        'assignedTo': assignment?['staffId'],
+        'assignmentStatus': assignment?['status'] ?? 'unassigned',
+      };
+    }).toList();
     return ApiResponse(200, {'orders': orderRows, 'count': orderRows.length});
   }
 
@@ -815,8 +1016,7 @@ class StaffFulfilmentService {
     if (order == null) {
       return const ApiResponse(404, {'error': 'ORDER_NOT_FOUND'});
     }
-    final existingAssignment =
-        assignments[orderId] ??
+    final existingAssignment = assignments[orderId] ??
         {
           'assignmentId': _nextId('ASN'),
           'orderId': orderId,
@@ -860,9 +1060,8 @@ class QrScanVerifyApi {
           : orderId.substring(orderId.length - 6);
       final fulfilmentMode =
           '${(order['quote'] as Map<String, Object?>)['fulfilmentMode']}';
-      final expected = fulfilmentMode == 'Store pickup'
-          ? 'PU-$suffix'
-          : 'DL-$suffix';
+      final expected =
+          fulfilmentMode == 'Store pickup' ? 'PU-$suffix' : 'DL-$suffix';
       if (code == expected) {
         final audit = {
           'scanId': _nextId('SCN'),
@@ -873,9 +1072,8 @@ class QrScanVerifyApi {
         };
         scanAudit.add(audit);
         if (body['markComplete'] == true) {
-          order['status'] = fulfilmentMode == 'Store pickup'
-              ? 'Picked up'
-              : 'Delivered';
+          order['status'] =
+              fulfilmentMode == 'Store pickup' ? 'Picked up' : 'Delivered';
         }
         return ApiResponse(200, {
           'valid': true,
@@ -896,13 +1094,13 @@ class QrDownloadService {
   final SmartKiranaBackendConfig config;
 
   ApiResponse appDownloadQr({String channel = 'counter'}) => ApiResponse(200, {
-    'landingUrl': '${config.appDownloadUrl}?channel=$channel',
-    'qrPayload': 'smartkirana://download?channel=$channel',
-    'playStoreUrl':
-        'https://play.google.com/store/apps/details?id=com.chandrastores.smartkirana',
-    'appStoreUrl':
-        'https://apps.apple.com/app/smart-kirana-chandra-stores/id0000000000',
-  });
+        'landingUrl': '${config.appDownloadUrl}?channel=$channel',
+        'qrPayload': 'smartkirana://download?channel=$channel',
+        'playStoreUrl': config.playStoreUrl,
+        'appStoreUrl': config.appStoreUrl,
+        'androidPackageId': config.androidPackageId,
+        'iosBundleId': config.iosBundleId,
+      });
 }
 
 class RewardWalletService {
@@ -910,14 +1108,14 @@ class RewardWalletService {
   final List<Map<String, Object?>> ledger = [];
 
   Map<String, Object?> _wallet(String customerId) => wallets.putIfAbsent(
-    customerId,
-    () => {
-      'customerId': customerId,
-      'points': 420,
-      'storeCreditLimit': 5000,
-      'storeCreditUsed': 1250,
-    },
-  );
+        customerId,
+        () => {
+          'customerId': customerId,
+          'points': 420,
+          'storeCreditLimit': 5000,
+          'storeCreditUsed': 1250,
+        },
+      );
 
   ApiResponse summary(String customerId) =>
       ApiResponse(200, {'wallet': _wallet(customerId)});
@@ -1013,9 +1211,9 @@ class DeliveryTrackingService {
   }
 
   ApiResponse timeline(String orderId) => ApiResponse(200, {
-    'orderId': orderId,
-    'timeline': timelines[orderId] ?? [],
-  });
+        'orderId': orderId,
+        'timeline': timelines[orderId] ?? [],
+      });
 }
 
 class DeliveryDispatchService {
@@ -1033,8 +1231,7 @@ class DeliveryDispatchService {
       final orderId = '${order['orderId']}';
       final quote = order['quote']! as Map<String, Object?>;
       final isHomeDelivery = quote['fulfilmentMode'] == 'Home delivery';
-      final isReady =
-          order['status'] == 'Packed' ||
+      final isReady = order['status'] == 'Packed' ||
           order['status'] == 'Assigned to rider' ||
           order['status'] == 'Out for delivery';
       final included = requestedIds.isEmpty || requestedIds.contains(orderId);
@@ -1097,9 +1294,9 @@ class DeliveryDispatchService {
   }
 
   ApiResponse list() => ApiResponse(200, {
-    'routes': routes.values.toList(),
-    'count': routes.length,
-  });
+        'routes': routes.values.toList(),
+        'count': routes.length,
+      });
 }
 
 class RecurringPlanService {
@@ -1140,9 +1337,8 @@ class RecurringPlanService {
   }
 
   ApiResponse due() {
-    final active = plans.values
-        .where((plan) => plan['status'] == 'active')
-        .toList();
+    final active =
+        plans.values.where((plan) => plan['status'] == 'active').toList();
     return ApiResponse(200, {'plans': active});
   }
 
@@ -1215,10 +1411,8 @@ class RecurringPlanService {
 class RoleAccessService {
   ApiResponse? guard(BackendRequest request) {
     final role = request.headers['x-role'] ?? 'anonymous';
-    final segments = request.path
-        .split('/')
-        .where((segment) => segment.isNotEmpty)
-        .toList();
+    final segments =
+        request.path.split('/').where((segment) => segment.isNotEmpty).toList();
     if (request.path == '/audit/events' ||
         segments.isNotEmpty && segments.first == 'admin') {
       if (role != 'admin' && role != 'owner') {
@@ -1269,8 +1463,7 @@ class AuditLogService {
       'statusCode': response.statusCode,
       'idempotencyKey': request.headers['x-idempotency-key'],
       'replay': replay,
-      'actor':
-          request.headers['x-actor'] ??
+      'actor': request.headers['x-actor'] ??
           request.body['customerId'] ??
           'anonymous',
       'createdAt': DateTime.now().toIso8601String(),
@@ -1278,9 +1471,9 @@ class AuditLogService {
   }
 
   ApiResponse list({int limit = 50}) => ApiResponse(200, {
-    'events': events.reversed.take(limit).toList(),
-    'total': events.length,
-  });
+        'events': events.reversed.take(limit).toList(),
+        'total': events.length,
+      });
 }
 
 class HealthCheckService {
@@ -1295,6 +1488,12 @@ class HealthCheckService {
       'providers': {
         'paymentGateway': backend.config.paymentGateway,
         'whatsAppProvider': backend.config.whatsAppProvider,
+        'paymentCredentialConfigured':
+            backend.config.razorpayKeyId.isNotEmpty ||
+                backend.config.cashfreeClientId.isNotEmpty,
+        'databaseUrlConfigured': backend.config.databaseUrlConfigured,
+        'storageProvider': backend.config.storageProvider,
+        'jwtSecretConfigured': backend.config.jwtSecretConfigured,
         'webhookSignatureRequired': backend.config.requireWebhookSignature,
       },
       'products': backend.products.length,
@@ -1357,9 +1556,8 @@ class PaymentReconciliationService {
         'balance': max(0, payable - paid),
         'paymentStatus': paid >= payable ? 'settled' : 'pending',
         'invoiceStatus': orderInvoices.isEmpty ? 'missing' : 'generated',
-        'invoiceIds': orderInvoices
-            .map((invoice) => invoice['invoiceId'])
-            .toList(),
+        'invoiceIds':
+            orderInvoices.map((invoice) => invoice['invoiceId']).toList(),
       });
     }
 
@@ -1398,26 +1596,174 @@ class PaymentReconciliationService {
   }
 }
 
+class AuthTokenService {
+  AuthTokenService(this.config);
+
+  final SmartKiranaBackendConfig config;
+
+  String issueToken({
+    required String subject,
+    required String role,
+    Duration ttl = const Duration(hours: 12),
+  }) {
+    final now = DateTime.now();
+    final header = _base64Json({'alg': 'HS256', 'typ': 'JWT'});
+    final payload = _base64Json({
+      'iss': config.jwtIssuer,
+      'aud': config.jwtAudience,
+      'sub': subject,
+      'role': role,
+      'iat': now.millisecondsSinceEpoch ~/ 1000,
+      'exp': now.add(ttl).millisecondsSinceEpoch ~/ 1000,
+    });
+    final signature = config.jwtSecretConfigured || config.demoMode
+        ? _base64Url('$header.$payload.${config.jwtIssuer}.$role')
+        : 'unsigned-production-token';
+    return '$header.$payload.$signature';
+  }
+
+  ApiResponse verify(Map<String, Object?> body) {
+    final token = '${body['token'] ?? ''}';
+    final parts = token.split('.');
+    if (parts.length != 3) {
+      return const ApiResponse(401, {'error': 'INVALID_TOKEN'});
+    }
+    final claims = _decodeBase64Json(parts[1]);
+    if (claims['iss'] != config.jwtIssuer ||
+        claims['aud'] != config.jwtAudience) {
+      return const ApiResponse(401, {'error': 'TOKEN_CONTEXT_MISMATCH'});
+    }
+    final expiresAt =
+        claims['exp'] is num ? (claims['exp']! as num).toInt() : 0;
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    if (expiresAt < now) {
+      return const ApiResponse(401, {'error': 'TOKEN_EXPIRED'});
+    }
+    return ApiResponse(200, {'claims': claims});
+  }
+
+  String _base64Json(Map<String, Object?> data) => _base64Url(jsonEncode(data));
+
+  Map<String, Object?> _decodeBase64Json(String encoded) {
+    try {
+      final normalized = base64Url.normalize(encoded);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final value = jsonDecode(decoded);
+      if (value is Map<String, Object?>) return value;
+      if (value is Map) {
+        return value.map((key, value) => MapEntry('$key', value));
+      }
+    } catch (_) {
+      return const {};
+    }
+    return const {};
+  }
+
+  String _base64Url(String value) =>
+      base64Url.encode(utf8.encode(value)).replaceAll('=', '');
+}
+
+class AdminConfigService {
+  AdminConfigService(this.config);
+
+  final SmartKiranaBackendConfig config;
+  final List<Map<String, Object?>> changes = [];
+
+  ApiResponse read() => ApiResponse(200, {
+        'config': config.toJson(),
+        'issues': config.validate(),
+      });
+
+  ApiResponse update(Map<String, Object?> body, {String actor = 'admin'}) {
+    final before = config.toJson();
+    config.update(body);
+    final after = config.toJson();
+    final changedKeys =
+        after.keys.where((key) => before[key] != after[key]).toList();
+    final change = {
+      'changeId': _nextId('CFG'),
+      'actor': actor,
+      'changedKeys': changedKeys,
+      'updatedAt': DateTime.now().toIso8601String(),
+    };
+    changes.add(change);
+    return ApiResponse(200, {
+      'config': after,
+      'issues': config.validate(),
+      'change': change,
+    });
+  }
+
+  ApiResponse history() => ApiResponse(200, {
+        'changes': changes.reversed.toList(),
+        'count': changes.length,
+      });
+}
+
+class BackendStateStore {
+  BackendStateStore(this.backend);
+
+  final SmartKiranaBackend backend;
+
+  ApiResponse exportSnapshot() => ApiResponse(200, {
+        'storageProvider': backend.config.storageProvider,
+        'databaseUrlConfigured': backend.config.databaseUrlConfigured,
+        'exportedAt': DateTime.now().toIso8601String(),
+        'products':
+            backend.products.values.map((product) => product.toJson()).toList(),
+        'orders': backend.orderCreationApi.orders.values.toList(),
+        'payments': backend.paymentGatewayBackend.attempts.values.toList(),
+        'refunds': backend.paymentGatewayBackend.refunds.values.toList(),
+        'customers': backend.customerApi.customers,
+        'supportTickets': backend.supportTicketBackend.tickets.values.toList(),
+        'recurringPlans': backend.recurringPlanService.plans.values.toList(),
+      });
+
+  ApiResponse importSnapshot(Map<String, Object?> body) {
+    final products = body['products'];
+    if (products is List) {
+      backend.products
+        ..clear()
+        ..addEntries(
+          products.whereType<Map>().map((item) {
+            final record = ProductRecord.fromJson(
+              item.map((key, value) => MapEntry('$key', value)),
+            );
+            return MapEntry(record.id, record);
+          }),
+        );
+    }
+    return ApiResponse(202, {
+      'imported': true,
+      'products': backend.products.length,
+      'storageProvider': backend.config.storageProvider,
+    });
+  }
+}
+
 class SmartKiranaBackend {
   SmartKiranaBackend.seeded({
     SmartKiranaBackendConfig? config,
-  }) : config = config ?? SmartKiranaBackendConfig.demo(),
-       products = _seedProducts() {
+  })  : config = config ?? SmartKiranaBackendConfig.demo(),
+        products = _seedProducts() {
     _wireServices(this.config);
   }
 
   SmartKiranaBackend.production({
     required SmartKiranaBackendConfig config,
-  }) : config = config,
-       products = _seedProducts() {
+  })  : config = config,
+        products = _seedProducts() {
     _wireServices(config);
   }
 
   void _wireServices(SmartKiranaBackendConfig runtimeConfig) {
+    authTokenService = AuthTokenService(runtimeConfig);
+    adminConfigService = AdminConfigService(runtimeConfig);
     whatsAppBusinessBackend = WhatsAppBusinessBackend(runtimeConfig);
     customerApi = CustomerApi(
       config: runtimeConfig,
       whatsApp: whatsAppBusinessBackend,
+      auth: authTokenService,
     );
     catalogueApi = CatalogueApi(products);
     inventoryService = InventoryService(products);
@@ -1466,6 +1812,7 @@ class SmartKiranaBackend {
       support: supportTicketBackend,
       notifications: notificationService,
     );
+    backendStateStore = BackendStateStore(this);
   }
 
   final SmartKiranaBackendConfig config;
@@ -1495,6 +1842,9 @@ class SmartKiranaBackend {
   late final PaymentReconciliationService paymentReconciliationService;
   late final RoleAccessService roleAccessService;
   late final StoreAlertService storeAlertService;
+  late final AuthTokenService authTokenService;
+  late final AdminConfigService adminConfigService;
+  late final BackendStateStore backendStateStore;
 
   ApiResponse handle(BackendRequest request) {
     final method = request.method.toUpperCase();
@@ -1517,10 +1867,8 @@ class SmartKiranaBackend {
 
   ApiResponse _dispatch(BackendRequest request) {
     final method = request.method.toUpperCase();
-    final segments = request.path
-        .split('/')
-        .where((segment) => segment.isNotEmpty)
-        .toList();
+    final segments =
+        request.path.split('/').where((segment) => segment.isNotEmpty).toList();
     final denied = roleAccessService.guard(request);
     if (denied != null) {
       return denied;
@@ -1537,6 +1885,9 @@ class SmartKiranaBackend {
     if (method == 'POST' && request.path == '/customers/login/verify') {
       return customerApi.verifyOtp(request.body);
     }
+    if (method == 'POST' && request.path == '/auth/token/verify') {
+      return authTokenService.verify(request.body);
+    }
     if (method == 'GET' && request.path == '/catalogue/products') {
       return catalogueApi.list();
     }
@@ -1548,6 +1899,28 @@ class SmartKiranaBackend {
     }
     if (method == 'POST' && request.path == '/inventory/reserve') {
       return inventoryService.reserve(request.body);
+    }
+    if (method == 'GET' && request.path == '/admin/config') {
+      return adminConfigService.read();
+    }
+    if ((method == 'POST' || method == 'PUT') &&
+        request.path == '/admin/config') {
+      return adminConfigService.update(
+        request.body,
+        actor: request.headers['x-actor'] ?? 'admin',
+      );
+    }
+    if (method == 'GET' && request.path == '/admin/config/history') {
+      return adminConfigService.history();
+    }
+    if (method == 'POST' && request.path == '/admin/catalogue/products') {
+      return catalogueApi.upsert(request.body);
+    }
+    if (method == 'GET' && request.path == '/admin/state/export') {
+      return backendStateStore.exportSnapshot();
+    }
+    if (method == 'POST' && request.path == '/admin/state/import') {
+      return backendStateStore.importSnapshot(request.body);
     }
     if (method == 'POST' && request.path == '/pricing/quote') {
       return pricingOfferEngine.quote(request.body);
@@ -1697,37 +2070,37 @@ class SmartKiranaBackend {
 }
 
 Map<String, ProductRecord> _seedProducts() => {
-  'rice_sona_5kg': const ProductRecord(
-    id: 'rice_sona_5kg',
-    name: 'Sona Masoori Rice',
-    category: 'Staples',
-    packSize: '5 kg',
-    price: 420,
-    mrp: 465,
-    stockQty: 120,
-    reorderLevel: 20,
-  ),
-  'oil_groundnut_1l': const ProductRecord(
-    id: 'oil_groundnut_1l',
-    name: 'Groundnut Oil',
-    category: 'Oils',
-    packSize: '1 L',
-    price: 185,
-    mrp: 210,
-    stockQty: 80,
-    reorderLevel: 15,
-  ),
-  'milk_toned_1l': const ProductRecord(
-    id: 'milk_toned_1l',
-    name: 'Toned Milk',
-    category: 'Dairy',
-    packSize: '1 L',
-    price: 62,
-    mrp: 64,
-    stockQty: 45,
-    reorderLevel: 25,
-  ),
-};
+      'rice_sona_5kg': const ProductRecord(
+        id: 'rice_sona_5kg',
+        name: 'Sona Masoori Rice',
+        category: 'Staples',
+        packSize: '5 kg',
+        price: 420,
+        mrp: 465,
+        stockQty: 120,
+        reorderLevel: 20,
+      ),
+      'oil_groundnut_1l': const ProductRecord(
+        id: 'oil_groundnut_1l',
+        name: 'Groundnut Oil',
+        category: 'Oils',
+        packSize: '1 L',
+        price: 185,
+        mrp: 210,
+        stockQty: 80,
+        reorderLevel: 15,
+      ),
+      'milk_toned_1l': const ProductRecord(
+        id: 'milk_toned_1l',
+        name: 'Toned Milk',
+        category: 'Dairy',
+        packSize: '1 L',
+        price: 62,
+        mrp: 64,
+        stockQty: 45,
+        reorderLevel: 25,
+      ),
+    };
 
 Map<String, int> _decodeItems(Object? raw) {
   if (raw is Map) {
@@ -1740,6 +2113,12 @@ Map<String, int> _decodeItems(Object? raw) {
     };
   }
   return const {};
+}
+
+int _int(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.round();
+  return int.tryParse('$value') ?? 0;
 }
 
 String _nextId(String prefix) =>

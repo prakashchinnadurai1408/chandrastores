@@ -336,8 +336,8 @@ void main() {
     'admin alerts surface low stock payments WhatsApp support and open orders',
     () {
       final backend = SmartKiranaBackend.seeded();
-      backend.products['milk_toned_1l'] = backend.products['milk_toned_1l']!
-          .copyWith(stockQty: 10);
+      backend.products['milk_toned_1l'] =
+          backend.products['milk_toned_1l']!.copyWith(stockQty: 10);
       final orderResponse = backend.handle(
         const BackendRequest(
           method: 'POST',
@@ -398,8 +398,8 @@ void main() {
 
   test('admin alert notification queues owner message when alerts exist', () {
     final backend = SmartKiranaBackend.seeded();
-    backend.products['milk_toned_1l'] = backend.products['milk_toned_1l']!
-        .copyWith(stockQty: 1);
+    backend.products['milk_toned_1l'] =
+        backend.products['milk_toned_1l']!.copyWith(stockQty: 1);
 
     final notify = backend.handle(
       const BackendRequest(
@@ -420,8 +420,8 @@ void main() {
 
   test('admin alert lifecycle acknowledges and resolves active alerts', () {
     final backend = SmartKiranaBackend.seeded();
-    backend.products['milk_toned_1l'] = backend.products['milk_toned_1l']!
-        .copyWith(stockQty: 0);
+    backend.products['milk_toned_1l'] =
+        backend.products['milk_toned_1l']!.copyWith(stockQty: 0);
     const alertId = 'LOW_STOCK_milk_toned_1l';
 
     final acknowledge = backend.handle(
@@ -778,7 +778,10 @@ void main() {
         storeUpiId: 'chandrastores@okaxis',
         paymentGateway: 'cashfree',
         jwtIssuer: 'chandrastores',
-      ),
+      )
+        ..paymentWebhookSecretConfigured = true
+        ..databaseUrlConfigured = true
+        ..jwtSecretConfigured = true,
     );
 
     final health = backend.handle(
@@ -831,5 +834,127 @@ void main() {
       ),
     );
     expect(signedWebhook.ok, isTrue);
+  });
+
+  test('admin config updates production providers and credentials safely', () {
+    final backend = SmartKiranaBackend.seeded();
+
+    final update = backend.handle(
+      const BackendRequest(
+        method: 'PUT',
+        path: '/admin/config',
+        headers: {'x-role': 'admin', 'x-actor': 'owner'},
+        body: {
+          'apiBaseUrl': 'https://api.chandrastores.in',
+          'appDownloadUrl': 'https://chandrastores.in/app',
+          'storeUpiId': 'chandrastores@okaxis',
+          'paymentGateway': 'cashfree',
+          'cashfreeClientId': 'CF_CLIENT_123456',
+          'whatsAppPhoneNumberId': '919876543210',
+          'whatsAppTemplateNamespace': 'chandra_stores',
+          'paymentWebhookSecretConfigured': true,
+          'databaseUrlConfigured': true,
+          'storageProvider': 'postgres',
+          'jwtSecretConfigured': true,
+          'requireWebhookSignature': true,
+        },
+      ),
+    );
+    expect(update.ok, isTrue);
+    final config = update.body['config']! as Map<String, Object?>;
+    expect(config['cashfreeClientId'], '****3456');
+    expect(config['storageProvider'], 'postgres');
+
+    final payment = backend.handle(
+      const BackendRequest(
+        method: 'POST',
+        path: '/payments/create',
+        body: {'orderId': 'ORD1', 'amount': 499},
+      ),
+    );
+    final paymentBody = payment.body['payment']! as Map<String, Object?>;
+    expect(paymentBody['gateway'], 'cashfree');
+    expect(paymentBody['gatewayCredentialConfigured'], isTrue);
+    expect(paymentBody['upiIntent'], contains('chandrastores@okaxis'));
+
+    final message = backend.handle(
+      const BackendRequest(
+        method: 'POST',
+        path: '/whatsapp/send',
+        body: {'to': '919876543210', 'template': 'order_received_v1'},
+      ),
+    );
+    final messageBody = message.body['message']! as Map<String, Object?>;
+    expect(messageBody['phoneNumberId'], '919876543210');
+    expect(messageBody['templateNamespace'], 'chandra_stores');
+
+    final health = backend.handle(
+      const BackendRequest(method: 'GET', path: '/health'),
+    );
+    expect(health.statusCode, 200);
+  });
+
+  test('admin catalogue state and auth token routes support production data',
+      () {
+    final backend = SmartKiranaBackend.seeded();
+
+    final product = backend.handle(
+      const BackendRequest(
+        method: 'POST',
+        path: '/admin/catalogue/products',
+        headers: {'x-role': 'admin'},
+        body: {
+          'id': 'atta_10kg',
+          'name': 'Whole Wheat Atta',
+          'category': 'Staples',
+          'packSize': '10 kg',
+          'price': 520,
+          'mrp': 560,
+          'stockQty': 75,
+          'reorderLevel': 12,
+        },
+      ),
+    );
+    expect(product.statusCode, 201);
+    expect(backend.products['atta_10kg']?.price, 520);
+
+    final export = backend.handle(
+      const BackendRequest(
+        method: 'GET',
+        path: '/admin/state/export',
+        headers: {'x-role': 'admin'},
+      ),
+    );
+    expect(export.ok, isTrue);
+    expect(export.body['products'], isA<List>());
+
+    final otp = backend.handle(
+      const BackendRequest(
+        method: 'POST',
+        path: '/customers/login/start',
+        body: {'mobile': '9876543210'},
+      ),
+    );
+    final verified = backend.handle(
+      BackendRequest(
+        method: 'POST',
+        path: '/customers/login/verify',
+        body: {
+          'mobile': '9876543210',
+          'requestId': otp.body['requestId'],
+          'otp': '123456',
+        },
+      ),
+    );
+    final tokenCheck = backend.handle(
+      BackendRequest(
+        method: 'POST',
+        path: '/auth/token/verify',
+        body: {'token': verified.body['token']},
+      ),
+    );
+    expect(tokenCheck.statusCode, 200);
+    final claims = tokenCheck.body['claims']! as Map<String, Object?>;
+    expect(claims['role'], 'customer');
   });
 }

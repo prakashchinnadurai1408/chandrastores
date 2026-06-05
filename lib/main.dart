@@ -142,11 +142,12 @@ class CustomerPreferences {
     String? languageCode,
     bool? easyMode,
     bool? voiceOrdering,
-  }) => CustomerPreferences(
-    languageCode: languageCode ?? this.languageCode,
-    easyMode: easyMode ?? this.easyMode,
-    voiceOrdering: voiceOrdering ?? this.voiceOrdering,
-  );
+  }) =>
+      CustomerPreferences(
+        languageCode: languageCode ?? this.languageCode,
+        easyMode: easyMode ?? this.easyMode,
+        voiceOrdering: voiceOrdering ?? this.voiceOrdering,
+      );
 }
 
 class StoreInvite {
@@ -159,6 +160,63 @@ class StoreInvite {
   final String landingUrl;
   final String referralCode;
   final String rewardText;
+}
+
+class AdminProductionConfig {
+  const AdminProductionConfig({
+    required this.apiBaseUrl,
+    required this.appDownloadUrl,
+    required this.storeUpiId,
+    required this.paymentGateway,
+    required this.whatsAppProvider,
+    required this.whatsAppPhoneNumberId,
+    required this.razorpayKeyId,
+    required this.cashfreeClientId,
+    required this.webhookSecretConfigured,
+    required this.databaseConfigured,
+    required this.jwtSecretConfigured,
+  });
+
+  final String apiBaseUrl;
+  final String appDownloadUrl;
+  final String storeUpiId;
+  final String paymentGateway;
+  final String whatsAppProvider;
+  final String whatsAppPhoneNumberId;
+  final String razorpayKeyId;
+  final String cashfreeClientId;
+  final bool webhookSecretConfigured;
+  final bool databaseConfigured;
+  final bool jwtSecretConfigured;
+
+  AdminProductionConfig copyWith({
+    String? apiBaseUrl,
+    String? appDownloadUrl,
+    String? storeUpiId,
+    String? paymentGateway,
+    String? whatsAppProvider,
+    String? whatsAppPhoneNumberId,
+    String? razorpayKeyId,
+    String? cashfreeClientId,
+    bool? webhookSecretConfigured,
+    bool? databaseConfigured,
+    bool? jwtSecretConfigured,
+  }) =>
+      AdminProductionConfig(
+        apiBaseUrl: apiBaseUrl ?? this.apiBaseUrl,
+        appDownloadUrl: appDownloadUrl ?? this.appDownloadUrl,
+        storeUpiId: storeUpiId ?? this.storeUpiId,
+        paymentGateway: paymentGateway ?? this.paymentGateway,
+        whatsAppProvider: whatsAppProvider ?? this.whatsAppProvider,
+        whatsAppPhoneNumberId:
+            whatsAppPhoneNumberId ?? this.whatsAppPhoneNumberId,
+        razorpayKeyId: razorpayKeyId ?? this.razorpayKeyId,
+        cashfreeClientId: cashfreeClientId ?? this.cashfreeClientId,
+        webhookSecretConfigured:
+            webhookSecretConfigured ?? this.webhookSecretConfigured,
+        databaseConfigured: databaseConfigured ?? this.databaseConfigured,
+        jwtSecretConfigured: jwtSecretConfigured ?? this.jwtSecretConfigured,
+      );
 }
 
 class HouseholdMember {
@@ -251,22 +309,22 @@ class KiranaOrder {
   final String status;
 
   KiranaOrder copyWith({String? status}) => KiranaOrder(
-    id: id,
-    items: items,
-    total: total,
-    discount: discount,
-    deliveryFee: deliveryFee,
-    payable: payable,
-    slot: slot,
-    deliveryMode: deliveryMode,
-    paymentMethod: paymentMethod,
-    deliveryAddress: deliveryAddress,
-    deliveryInstruction: deliveryInstruction,
-    substitutionPreference: substitutionPreference,
-    reservationExpiresAt: reservationExpiresAt,
-    createdAt: createdAt,
-    status: status ?? this.status,
-  );
+        id: id,
+        items: items,
+        total: total,
+        discount: discount,
+        deliveryFee: deliveryFee,
+        payable: payable,
+        slot: slot,
+        deliveryMode: deliveryMode,
+        paymentMethod: paymentMethod,
+        deliveryAddress: deliveryAddress,
+        deliveryInstruction: deliveryInstruction,
+        substitutionPreference: substitutionPreference,
+        reservationExpiresAt: reservationExpiresAt,
+        createdAt: createdAt,
+        status: status ?? this.status,
+      );
 
   int get itemCount => items.fold(0, (sum, line) => sum + line.quantity);
   int get reservedItemCount =>
@@ -495,9 +553,8 @@ GroceryStatement buildStatement(List<KiranaOrder> orders) {
     monthLabel: monthLabel,
     orderCount: orders.length,
     totalSpend: orders.fold(0, (sum, order) => sum + order.payable),
-    digitalPayments: orders
-        .where((order) => order.paymentMethod != 'Cash')
-        .length,
+    digitalPayments:
+        orders.where((order) => order.paymentMethod != 'Cash').length,
     topCategories: Map.fromEntries(sortedEntries.take(3)),
   );
 }
@@ -633,9 +690,10 @@ int deliveryFeeFor(
   String slot,
   int subtotal, [
   String mode = 'Home delivery',
-]) => mode == 'Store pickup' || subtotal >= freeDeliveryThreshold
-    ? 0
-    : deliverySlotFees[slot] ?? 0;
+]) =>
+    mode == 'Store pickup' || subtotal >= freeDeliveryThreshold
+        ? 0
+        : deliverySlotFees[slot] ?? 0;
 
 const smartOffers = <SmartOffer>[
   SmartOffer(
@@ -870,8 +928,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 'Smart Kirana',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                      fontWeight: FontWeight.w800,
+                    ),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -968,11 +1026,24 @@ class _ShopShellState extends State<ShopShell> {
   CustomerAddress selectedAddress = customerAddress;
   String deliveryInstruction = 'Ring bell and hand over';
   String substitutionPreference = 'Call before replacing';
+  AdminProductionConfig adminConfig = const AdminProductionConfig(
+    apiBaseUrl: 'https://api.chandrastores.in',
+    appDownloadUrl: 'https://chandrastores.in/app',
+    storeUpiId: 'chandrastores@upi',
+    paymentGateway: 'razorpay',
+    whatsAppProvider: 'meta-whatsapp-business',
+    whatsAppPhoneNumberId: '',
+    razorpayKeyId: '',
+    cashfreeClientId: '',
+    webhookSecretConfigured: false,
+    databaseConfigured: false,
+    jwtSecretConfigured: false,
+  );
 
   List<String> get categories => [
-    'All',
-    ...{for (final product in products) product.category},
-  ];
+        'All',
+        ...{for (final product in products) product.category},
+      ];
   int get cartCount => cart.values.fold(0, (sum, line) => sum + line.quantity);
   int get subtotal => cart.values.fold(0, (sum, line) => sum + line.total);
   int get offerDiscount => (appliedOffer?.isEligible(subtotal) ?? false)
@@ -1403,8 +1474,8 @@ class _ShopShellState extends State<ShopShell> {
   }
 
   void updateLanguage(String languageCode) => setState(
-    () => preferences = preferences.copyWith(languageCode: languageCode),
-  );
+        () => preferences = preferences.copyWith(languageCode: languageCode),
+      );
 
   void toggleEasyMode(bool value) =>
       setState(() => preferences = preferences.copyWith(easyMode: value));
@@ -1524,6 +1595,13 @@ class _ShopShellState extends State<ShopShell> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
+  void updateAdminConfig(AdminProductionConfig value) {
+    setState(() => adminConfig = value);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Production configuration updated')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pages = [
@@ -1611,6 +1689,10 @@ class _ShopShellState extends State<ShopShell> {
         onRedeemReward: redeemRewardVoucher,
         onShareReward: shareRewardVoucher,
       ),
+      AdminConfigPage(
+        config: adminConfig,
+        onSave: updateAdminConfig,
+      ),
     ];
 
     return Scaffold(
@@ -1651,10 +1733,228 @@ class _ShopShellState extends State<ShopShell> {
             selectedIcon: Icon(Icons.person),
             label: 'Account',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.admin_panel_settings_outlined),
+            selectedIcon: Icon(Icons.admin_panel_settings),
+            label: 'Admin',
+          ),
         ],
       ),
     );
   }
+}
+
+class AdminConfigPage extends StatefulWidget {
+  const AdminConfigPage({
+    required this.config,
+    required this.onSave,
+    super.key,
+  });
+
+  final AdminProductionConfig config;
+  final ValueChanged<AdminProductionConfig> onSave;
+
+  @override
+  State<AdminConfigPage> createState() => _AdminConfigPageState();
+}
+
+class _AdminConfigPageState extends State<AdminConfigPage> {
+  late final TextEditingController apiBaseUrl;
+  late final TextEditingController appDownloadUrl;
+  late final TextEditingController storeUpiId;
+  late final TextEditingController whatsAppProvider;
+  late final TextEditingController whatsAppPhoneNumberId;
+  late final TextEditingController razorpayKeyId;
+  late final TextEditingController cashfreeClientId;
+  late String paymentGateway;
+  late bool webhookSecretConfigured;
+  late bool databaseConfigured;
+  late bool jwtSecretConfigured;
+
+  @override
+  void initState() {
+    super.initState();
+    final config = widget.config;
+    apiBaseUrl = TextEditingController(text: config.apiBaseUrl);
+    appDownloadUrl = TextEditingController(text: config.appDownloadUrl);
+    storeUpiId = TextEditingController(text: config.storeUpiId);
+    whatsAppProvider = TextEditingController(text: config.whatsAppProvider);
+    whatsAppPhoneNumberId =
+        TextEditingController(text: config.whatsAppPhoneNumberId);
+    razorpayKeyId = TextEditingController(text: config.razorpayKeyId);
+    cashfreeClientId = TextEditingController(text: config.cashfreeClientId);
+    paymentGateway = config.paymentGateway;
+    webhookSecretConfigured = config.webhookSecretConfigured;
+    databaseConfigured = config.databaseConfigured;
+    jwtSecretConfigured = config.jwtSecretConfigured;
+  }
+
+  @override
+  void dispose() {
+    apiBaseUrl.dispose();
+    appDownloadUrl.dispose();
+    storeUpiId.dispose();
+    whatsAppProvider.dispose();
+    whatsAppPhoneNumberId.dispose();
+    razorpayKeyId.dispose();
+    cashfreeClientId.dispose();
+    super.dispose();
+  }
+
+  List<String> get readinessIssues => [
+        if (!apiBaseUrl.text.startsWith('https://')) 'Use HTTPS API URL',
+        if (!appDownloadUrl.text.startsWith('https://')) 'Use HTTPS app link',
+        if (!storeUpiId.text.contains('@')) 'Enter valid store UPI ID',
+        if (paymentGateway == 'razorpay' && razorpayKeyId.text.isEmpty)
+          'Add Razorpay key ID',
+        if (paymentGateway == 'cashfree' && cashfreeClientId.text.isEmpty)
+          'Add Cashfree client ID',
+        if (!webhookSecretConfigured) 'Confirm payment webhook secret',
+        if (!databaseConfigured) 'Connect production database',
+        if (!jwtSecretConfigured) 'Configure JWT signing secret',
+      ];
+
+  void save() {
+    widget.onSave(
+      AdminProductionConfig(
+        apiBaseUrl: apiBaseUrl.text.trim(),
+        appDownloadUrl: appDownloadUrl.text.trim(),
+        storeUpiId: storeUpiId.text.trim(),
+        paymentGateway: paymentGateway,
+        whatsAppProvider: whatsAppProvider.text.trim(),
+        whatsAppPhoneNumberId: whatsAppPhoneNumberId.text.trim(),
+        razorpayKeyId: razorpayKeyId.text.trim(),
+        cashfreeClientId: cashfreeClientId.text.trim(),
+        webhookSecretConfigured: webhookSecretConfigured,
+        databaseConfigured: databaseConfigured,
+        jwtSecretConfigured: jwtSecretConfigured,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final issues = readinessIssues;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(
+          'Production Admin',
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          issues.isEmpty
+              ? 'Provider, storage, and auth settings are ready for launch.'
+              : '${issues.length} setup items need attention.',
+        ),
+        const SizedBox(height: 16),
+        _ConfigTextField(label: 'API base URL', controller: apiBaseUrl),
+        _ConfigTextField(label: 'App download URL', controller: appDownloadUrl),
+        _ConfigTextField(label: 'Store UPI ID', controller: storeUpiId),
+        DropdownButtonFormField<String>(
+          initialValue: paymentGateway,
+          decoration: const InputDecoration(
+            labelText: 'Payment gateway',
+            border: OutlineInputBorder(),
+          ),
+          items: const [
+            DropdownMenuItem(value: 'razorpay', child: Text('Razorpay')),
+            DropdownMenuItem(value: 'cashfree', child: Text('Cashfree')),
+          ],
+          onChanged: (value) => setState(
+            () => paymentGateway = value ?? paymentGateway,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _ConfigTextField(label: 'Razorpay key ID', controller: razorpayKeyId),
+        _ConfigTextField(
+          label: 'Cashfree client ID',
+          controller: cashfreeClientId,
+        ),
+        _ConfigTextField(
+          label: 'WhatsApp provider',
+          controller: whatsAppProvider,
+        ),
+        _ConfigTextField(
+          label: 'WhatsApp phone number ID',
+          controller: whatsAppPhoneNumberId,
+        ),
+        CheckboxListTile(
+          value: webhookSecretConfigured,
+          onChanged: (value) =>
+              setState(() => webhookSecretConfigured = value ?? false),
+          title: const Text('Payment webhook secret configured'),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          value: databaseConfigured,
+          onChanged: (value) =>
+              setState(() => databaseConfigured = value ?? false),
+          title: const Text('Production database connected'),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          value: jwtSecretConfigured,
+          onChanged: (value) =>
+              setState(() => jwtSecretConfigured = value ?? false),
+          title: const Text('JWT signing secret configured'),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        if (issues.isNotEmpty)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Readiness issues',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final issue in issues)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(issue),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: save,
+          icon: const Icon(Icons.save),
+          label: const Text('Update configuration'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ConfigTextField extends StatelessWidget {
+  const _ConfigTextField({
+    required this.label,
+    required this.controller,
+  });
+
+  final String label;
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+          ),
+        ),
+      );
 }
 
 class CataloguePage extends StatelessWidget {
@@ -1679,8 +1979,8 @@ class CataloguePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final filtered = products.where((product) {
       final matchesCategory = category == 'All' || product.category == category;
-      final text = '${product.name} ${product.brand} ${product.category}'
-          .toLowerCase();
+      final text =
+          '${product.name} ${product.brand} ${product.category}'.toLowerCase();
       return matchesCategory && text.contains(query.toLowerCase());
     }).toList();
 
@@ -1760,8 +2060,8 @@ class ProductCard extends StatelessWidget {
                   Text(
                     product.name,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
                   Text(
                     '${product.brand} • ${product.packSize} • ${product.category}',
@@ -1901,7 +2201,9 @@ class PlannerPage extends StatelessWidget {
                         Expanded(
                           child: Text(
                             item.label,
-                            style: Theme.of(context).textTheme.titleLarge
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                         ),
@@ -1969,8 +2271,8 @@ class SavedPlanCard extends StatelessWidget {
                   child: Text(
                     plan.name,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text(plan.frequency)),
@@ -2288,9 +2590,8 @@ class CartPage extends StatelessWidget {
                   ),
                 SummaryRow(
                   label: 'Delivery fee',
-                  value: deliveryFee == 0
-                      ? 'Free'
-                      : currency.format(deliveryFee),
+                  value:
+                      deliveryFee == 0 ? 'Free' : currency.format(deliveryFee),
                 ),
                 if (subtotal < freeDeliveryThreshold)
                   SummaryRow(
@@ -2334,9 +2635,8 @@ class ApprovalSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pendingCount = approvalRequests
-        .where((request) => request.status == 'Pending')
-        .length;
+    final pendingCount =
+        approvalRequests.where((request) => request.status == 'Pending').length;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -2356,8 +2656,8 @@ class ApprovalSummaryCard extends StatelessWidget {
                   child: Text(
                     'Family approval',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text('$pendingCount pending')),
@@ -2409,14 +2709,14 @@ class _ApprovalRequestSheetState extends State<ApprovalRequestSheet> {
   }
 
   ApprovalRequest buildRequest() => ApprovalRequest(
-    requestId: 'APR${DateTime.now().millisecondsSinceEpoch}',
-    member: member,
-    cartTotal: widget.cartTotal,
-    note: noteController.text.trim().isEmpty
-        ? 'Please approve this Smart Kirana cart.'
-        : noteController.text.trim(),
-    createdAt: DateTime.now(),
-  );
+        requestId: 'APR${DateTime.now().millisecondsSinceEpoch}',
+        member: member,
+        cartTotal: widget.cartTotal,
+        note: noteController.text.trim().isEmpty
+            ? 'Please approve this Smart Kirana cart.'
+            : noteController.text.trim(),
+        createdAt: DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -2442,8 +2742,8 @@ class _ApprovalRequestSheetState extends State<ApprovalRequestSheet> {
                 child: Text(
                   'Request family approval',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -2552,8 +2852,8 @@ class BudgetGuardCard extends StatelessWidget {
                   child: Text(
                     'Monthly budget guard',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(
@@ -2667,8 +2967,8 @@ class OrderConfirmationSheet extends StatelessWidget {
                 child: Text(
                   'Order received',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -2762,11 +3062,11 @@ class _CancellationSheetState extends State<CancellationSheet> {
       widget.existingCancellation?.refundMode ?? 'Original payment method';
 
   OrderCancellation buildCancellation() => OrderCancellation(
-    orderId: widget.order.id,
-    reason: reason,
-    refundMode: refundMode,
-    createdAt: widget.existingCancellation?.createdAt ?? DateTime.now(),
-  );
+        orderId: widget.order.id,
+        reason: reason,
+        refundMode: refundMode,
+        createdAt: widget.existingCancellation?.createdAt ?? DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -2805,8 +3105,8 @@ class _CancellationSheetState extends State<CancellationSheet> {
                 child: Text(
                   'Cancel ${widget.order.id}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -2910,12 +3210,12 @@ class _DeliveryChangeSheetState extends State<DeliveryChangeSheet> {
   }
 
   DeliveryChangeRequest buildRequest() => DeliveryChangeRequest(
-    orderId: widget.order.id,
-    requestedSlot: requestedSlot,
-    reason: reason,
-    note: noteController.text.trim(),
-    createdAt: widget.existingRequest?.createdAt ?? DateTime.now(),
-  );
+        orderId: widget.order.id,
+        requestedSlot: requestedSlot,
+        reason: reason,
+        note: noteController.text.trim(),
+        createdAt: widget.existingRequest?.createdAt ?? DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -2956,8 +3256,8 @@ class _DeliveryChangeSheetState extends State<DeliveryChangeSheet> {
                   child: Text(
                     'Reschedule ${widget.order.id}',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -3076,14 +3376,15 @@ class _PaymentProofSheetState extends State<PaymentProofSheet> {
   }
 
   PaymentProof buildProof() => PaymentProof(
-    orderId: widget.order.id,
-    method: method,
-    reference: referenceController.text.trim().isEmpty
-        ? 'Pending reference'
-        : referenceController.text.trim(),
-    amount: int.tryParse(amountController.text.trim()) ?? widget.order.payable,
-    createdAt: widget.existingProof?.createdAt ?? DateTime.now(),
-  );
+        orderId: widget.order.id,
+        method: method,
+        reference: referenceController.text.trim().isEmpty
+            ? 'Pending reference'
+            : referenceController.text.trim(),
+        amount:
+            int.tryParse(amountController.text.trim()) ?? widget.order.payable,
+        createdAt: widget.existingProof?.createdAt ?? DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -3122,8 +3423,8 @@ class _PaymentProofSheetState extends State<PaymentProofSheet> {
                   child: Text(
                     'Payment proof for ${widget.order.id}',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -3224,8 +3525,8 @@ class _InvoiceRequestSheetState extends State<InvoiceRequestSheet> {
       widget.existingRequest?.invoiceType ?? 'Retail bill';
   late final TextEditingController billingNameController =
       TextEditingController(
-        text: widget.existingRequest?.billingName ?? 'Chandra Stores customer',
-      );
+    text: widget.existingRequest?.billingName ?? 'Chandra Stores customer',
+  );
   late final TextEditingController gstinController = TextEditingController(
     text: widget.existingRequest?.gstin ?? '',
   );
@@ -3242,15 +3543,15 @@ class _InvoiceRequestSheetState extends State<InvoiceRequestSheet> {
   }
 
   InvoiceRequest buildRequest() => InvoiceRequest(
-    orderId: widget.order.id,
-    invoiceType: invoiceType,
-    billingName: billingNameController.text.trim().isEmpty
-        ? 'Chandra Stores customer'
-        : billingNameController.text.trim(),
-    gstin: gstinController.text.trim().toUpperCase(),
-    email: emailController.text.trim(),
-    createdAt: widget.existingRequest?.createdAt ?? DateTime.now(),
-  );
+        orderId: widget.order.id,
+        invoiceType: invoiceType,
+        billingName: billingNameController.text.trim().isEmpty
+            ? 'Chandra Stores customer'
+            : billingNameController.text.trim(),
+        gstin: gstinController.text.trim().toUpperCase(),
+        email: emailController.text.trim(),
+        createdAt: widget.existingRequest?.createdAt ?? DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -3285,8 +3586,8 @@ class _InvoiceRequestSheetState extends State<InvoiceRequestSheet> {
                   child: Text(
                     'Invoice for ${widget.order.id}',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -3405,17 +3706,16 @@ class _SupportTicketSheetState extends State<SupportTicketSheet> {
   }
 
   SupportTicket buildTicket() => SupportTicket(
-    ticketId:
-        widget.existingTicket?.ticketId ??
-        'SUP${DateTime.now().millisecondsSinceEpoch}',
-    orderId: widget.order.id,
-    issueType: issueType,
-    priority: priority,
-    description: descriptionController.text.trim().isEmpty
-        ? 'Customer requested support from app.'
-        : descriptionController.text.trim(),
-    createdAt: widget.existingTicket?.createdAt ?? DateTime.now(),
-  );
+        ticketId: widget.existingTicket?.ticketId ??
+            'SUP${DateTime.now().millisecondsSinceEpoch}',
+        orderId: widget.order.id,
+        issueType: issueType,
+        priority: priority,
+        description: descriptionController.text.trim().isEmpty
+            ? 'Customer requested support from app.'
+            : descriptionController.text.trim(),
+        createdAt: widget.existingTicket?.createdAt ?? DateTime.now(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -3450,8 +3750,8 @@ class _SupportTicketSheetState extends State<SupportTicketSheet> {
                 child: Text(
                   'Support for ${widget.order.id}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -3586,8 +3886,8 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                 child: Text(
                   'Rate ${widget.order.id}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -3688,8 +3988,8 @@ class OrderHandoffPassSheet extends StatelessWidget {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -3710,9 +4010,9 @@ class OrderHandoffPassSheet extends StatelessWidget {
                 Text(
                   order.handoffCode,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
-                  ),
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                      ),
                 ),
                 const SizedBox(height: 4),
                 Text(order.handoffCodeLabel),
@@ -3770,8 +4070,8 @@ class OrderTrackingSheet extends StatelessWidget {
                 child: Text(
                   'Track ${order.id}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ),
             ],
@@ -3796,12 +4096,12 @@ class OrderTrackingSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ...orderStatusSteps.asMap().entries.map(
-            (entry) => OrderTimelineStep(
-              label: entry.value,
-              completed: entry.key <= order.statusIndex,
-              isCurrent: entry.key == order.statusIndex,
-            ),
-          ),
+                (entry) => OrderTimelineStep(
+                  label: entry.value,
+                  completed: entry.key <= order.statusIndex,
+                  isCurrent: entry.key == order.statusIndex,
+                ),
+              ),
           const SizedBox(height: 12),
           const InfoTile(
             icon: Icons.swap_horiz,
@@ -3924,8 +4224,8 @@ class PreferenceCard extends StatelessWidget {
                   child: Text(
                     'Accessibility & language',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -4013,8 +4313,8 @@ class HouseholdApprovalCard extends StatelessWidget {
                   child: Text(
                     'Household approvals',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text('${approvalRequests.length}')),
@@ -4090,17 +4390,15 @@ class NotificationCenterCard extends StatelessWidget {
                   child: Text(
                     'Notification center',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text('${notifications.length}')),
               ],
             ),
             const SizedBox(height: 12),
-            ...notifications
-                .take(4)
-                .map(
+            ...notifications.take(4).map(
                   (notification) => ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.circle_notifications),
@@ -4155,8 +4453,8 @@ class AddressBookCard extends StatelessWidget {
                   child: Text(
                     'Delivery address book',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text(selectedAddress.label)),
@@ -4214,8 +4512,8 @@ class InviteCard extends StatelessWidget {
                   child: Text(
                     'Invite family to Smart Kirana',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -4271,8 +4569,8 @@ class StatementCard extends StatelessWidget {
                   child: Text(
                     '${statement.monthLabel} grocery statement',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
@@ -4347,8 +4645,8 @@ class RewardCenterCard extends StatelessWidget {
                   child: Text(
                     'Reward center',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
                 Chip(label: Text('$availablePoints pts')),
@@ -4428,8 +4726,8 @@ class WalletSummaryCard extends StatelessWidget {
                   child: Text(
                     'Grocery wallet',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ),
               ],
